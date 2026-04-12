@@ -1,0 +1,47 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: hsl(210 40% 98%);
+  --color-foreground: hsl(222 47% 11%);
+
+  --color-primary: hsl(221 83% 53%);
+  --color-primary-foreground: hsl(210 40% 98%);
+
+  --color-surface: hsl(0 0% 100%);
+  --color-surface-foreground: hsl(222 47% 11%);
+
+  --color-muted: hsl(215 16% 47%);
+  --color-muted-foreground: hsl(215 16% 47%);
+
+  --color-border: hsl(214 32% 91%);
+  
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+  --radius-3xl: 1.5rem;
+
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-foreground antialiased min-h-screen relative;
+    background-image: 
+        radial-gradient(at 0% 0%, hsla(221, 83%, 53%, 0.05) 0px, transparent 50%),
+        radial-gradient(at 100% 0%, hsla(199, 89%, 48%, 0.05) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, hsla(221, 83%, 53%, 0.05) 0px, transparent 50%),
+        radial-gradient(at 0% 100%, hsla(199, 89%, 48%, 0.05) 0px, transparent 50%);
+  }
+}
+
+@utility glass-panel {
+  @apply bg-white/70 backdrop-blur-md border border-white/20 shadow-lg;
+}
+
+@utility hover-lift {
+  @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/10;
+}
+
+@utility text-gradient {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-400;
+}
+

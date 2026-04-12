@@ -1,0 +1,29 @@
+# ── Dependencies ──────────────────────────────
+node_modules/
+
+# ── Environment secrets ───────────────────────
+.env
+.env.local
+.env.*.local
+
+# ── Build output ──────────────────────────────
+dist/
+build/
+
+# ── Logs ─────────────────────────────────────
+logs/
+*.log
+npm-debug.log*
+
+# ── OS files ─────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Editor ───────────────────────────────────
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# ── Debug / Utility scripts ───────────────────
+db-clean.js
+scratch/
