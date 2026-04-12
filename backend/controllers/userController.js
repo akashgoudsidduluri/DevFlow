@@ -1,6 +1,7 @@
 import User from "../models/User.js";
 import Project from "../models/Project.js";
 import generateToken from "../utils/generateToken.js";
+import mongoose from "mongoose";
 
 // @desc    Register a new user
 // @route   POST /api/users
@@ -171,7 +172,7 @@ export const updateUserProfile = async (req, res) => {
 export const getPublicProfile = async (req, res) => {
     try {
         const user = await User.findById(req.params.id)
-            .select("-password -email") 
+            .select("-password")
             .populate("followers", "name avatarUrl")
             .populate("following", "name avatarUrl");
 
@@ -187,9 +188,22 @@ export const getPublicProfile = async (req, res) => {
             ]
         }).select("name description isAtRisk").populate("owner", "name avatarUrl");
 
+        const isFollowing = user.followers.some(f => f._id.toString() === req.user._id.toString());
+
         res.json({
-            ...user._doc,
-            projects
+            _id: user._id,
+            name: user.name,
+            bio: user.bio,
+            avatarUrl: user.avatarUrl,
+            createdAt: user.createdAt,
+            followers: user.followers,
+            following: user.following,
+            followersCount: user.followers.length,
+            followingCount: user.following.length,
+            projects,
+            projectsCount: projects.length,
+            isFollowing,
+            isOwnProfile: req.params.id === req.user._id.toString(),
         });
     } catch (error) {
         res.status(500).json({ message: error.message || "Server Error" });
@@ -203,12 +217,13 @@ export const followUser = async (req, res) => {
     try {
         const targetId = req.params.id;
         const currentId = req.user._id;
+        const targetObjectId = new mongoose.Types.ObjectId(targetId);
 
         if (targetId === currentId.toString()) {
             return res.status(400).json({ message: "Cannot follow yourself" });
         }
 
-        const targetUser = await User.findById(targetId);
+        const targetUser = await User.findById(targetObjectId);
         if (!targetUser) {
             return res.status(404).json({ message: "User to follow not found" });
         }
@@ -216,11 +231,11 @@ export const followUser = async (req, res) => {
         const currentUser = await User.findById(currentId);
 
         // Check already following
-        if (currentUser.following.includes(targetId)) {
+        if (currentUser.following.some(id => id.equals(targetObjectId))) {
             return res.status(400).json({ message: "Already following this user" });
         }
 
-        currentUser.following.push(targetId);
+        currentUser.following.push(targetObjectId);
         targetUser.followers.push(currentId);
 
         await currentUser.save();
@@ -239,16 +254,17 @@ export const unfollowUser = async (req, res) => {
     try {
         const targetId = req.params.id;
         const currentId = req.user._id;
+        const targetObjectId = new mongoose.Types.ObjectId(targetId);
 
-        const targetUser = await User.findById(targetId);
+        const targetUser = await User.findById(targetObjectId);
         const currentUser = await User.findById(currentId);
 
         if (!targetUser) {
             return res.status(404).json({ message: "User to unfollow not found" });
         }
 
-        currentUser.following = currentUser.following.filter(id => id.toString() !== targetId);
-        targetUser.followers = targetUser.followers.filter(id => id.toString() !== currentId.toString());
+        currentUser.following = currentUser.following.filter(id => !id.equals(targetObjectId));
+        targetUser.followers = targetUser.followers.filter(id => !id.equals(currentId));
 
         await currentUser.save();
         await targetUser.save();

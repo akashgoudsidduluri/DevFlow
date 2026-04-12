@@ -10,6 +10,7 @@ import projectRoutes from "./routes/projectRoutes.js";
 import issueRoutes from "./routes/issueRoutes.js";
 import discussionRoutes from "./routes/discussionRoutes.js";
 import { notFound, errorHandler } from "./middleware/errorMiddleware.js";
+import { apiLimiter } from "./middleware/rateLimiter.js";
 import { initSocket } from "./utils/socketManager.js";
 
 dotenv.config();
@@ -27,7 +28,11 @@ const corsOptions = {
 
 // Init Socket.io
 const io = new Server(httpServer, {
-  cors: { origin: 'http://localhost:5173', methods: ['GET', 'POST'] }
+  cors: {
+    origin: 'http://localhost:5173',
+    methods: ['GET', 'POST'],
+    credentials: true,
+  },
 });
 
 initSocket(io);
@@ -46,6 +51,7 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use('/api', apiLimiter);
 
 app.use("/api/users", userRoutes);
 app.use("/api/projects", projectRoutes);
