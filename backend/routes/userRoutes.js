@@ -8,7 +8,8 @@ import {
     updateUserProfile,
     getPublicProfile,
     followUser,
-    unfollowUser
+    unfollowUser,
+    changePassword
 } from "../controllers/userController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
@@ -21,6 +22,7 @@ router.get("/search", protect, searchUsers);
 router.route("/profile")
     .get(protect, getUserProfile)
     .put(protect, updateUserProfile);
+router.post("/change-password", protect, changePassword);
 
 router.post("/follow/:id", protect, followUser);
 router.post("/unfollow/:id", protect, unfollowUser);

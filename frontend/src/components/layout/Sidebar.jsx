@@ -14,12 +14,13 @@ import {
 import { cn } from '../../lib/utils';
 import GlassPanel from '../shared/GlassPanel';
 import { useAuth } from '../../context/AuthContext';
+import { useLayout } from '../../context/LayoutContext';
 
 const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { logout, user } = useAuth();
-  const [isCollapsed, setIsCollapsed] = React.useState(false);
+  const { isCollapsed, toggleSidebar } = useLayout();
 
   const handleLogout = async () => {
     await logout();
@@ -35,11 +36,14 @@ const Sidebar = () => {
 
   return (
     <aside className={cn(
-      "fixed left-0 top-0 h-screen transition-all duration-500 z-50 p-4 pt-10",
-      isCollapsed ? "w-20" : "w-64"
+      "fixed left-0 top-0 h-screen transition-all duration-500 z-50",
+      isCollapsed ? "w-20 p-2 pt-4" : "w-64 p-4 pt-10"
     )}>
       <GlassPanel className="h-full flex flex-col items-center py-6 bg-white/60">
-        <div className="flex items-center gap-3 px-4 mb-10 w-full overflow-hidden">
+        <div className={cn(
+          "flex items-center gap-3 mb-10 w-full overflow-hidden transition-all duration-500",
+          isCollapsed ? "px-1 justify-center" : "px-4 justify-start"
+        )}>
           <div className="p-2 bg-primary rounded-xl flex-shrink-0 shadow-lg shadow-primary/30">
              <span className="text-white font-black text-xl">D</span>
           </div>
@@ -52,7 +56,7 @@ const Sidebar = () => {
             
             const content = (
               <>
-                <item.icon className={cn("h-5 w-5", isActive ? "text-white" : "group-hover:scale-110 transition-transform")} />
+                <item.icon className={cn("h-5 w-5 flex-shrink-0", isActive ? "text-white" : "group-hover:scale-110 transition-transform")} />
                 {!isCollapsed && <span className="font-medium text-sm">{item.name}</span>}
                 {isActive && !isCollapsed && (
                     <div className="ml-auto w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
@@ -61,7 +65,8 @@ const Sidebar = () => {
             );
 
             const className = cn(
-                "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group",
+                isCollapsed ? "flex justify-center" : "flex items-center gap-3",
+                "px-4 py-3 rounded-xl transition-all duration-300 group",
                 isActive 
                   ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" 
                   : "text-muted hover:bg-primary/5 hover:text-primary cursor-pointer"
@@ -88,7 +93,10 @@ const Sidebar = () => {
         </nav>
 
         {/* User Info & Logout */}
-        <div className="w-full px-2 mt-auto border-t border-border/50 pt-4 space-y-2">
+        <div className={cn(
+          "w-full mt-auto border-t border-border/50 pt-4 space-y-2",
+          isCollapsed ? "px-1" : "px-2"
+        )}>
              {!isCollapsed && user && (
                 <div className="px-4 py-2 mb-2">
                     <p className="text-[10px] font-black uppercase tracking-widest text-muted">Active Session</p>
@@ -97,16 +105,22 @@ const Sidebar = () => {
              )}
              <button 
                 onClick={handleLogout}
-                className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-muted hover:bg-red-50 hover:text-red-500 transition-all group"
+                className={cn(
+                  isCollapsed ? "flex justify-center" : "flex items-center gap-3",
+                  "px-4 py-3 w-full rounded-xl text-muted hover:bg-red-50 hover:text-red-500 transition-all group"
+                )}
              >
-                <LogOut className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                <LogOut className="h-5 w-5 flex-shrink-0 group-hover:translate-x-1 transition-transform" />
                 {!isCollapsed && <span className="font-medium text-sm">Sign Out</span>}
              </button>
         </div>
 
         <button 
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="absolute -right-3 top-20 bg-white border border-border p-1 rounded-full shadow-md text-muted hover:text-primary transition-colors z-50"
+          onClick={toggleSidebar}
+          className={cn(
+            "absolute bg-white border border-border p-1 rounded-full shadow-md text-muted hover:text-primary transition-colors z-50",
+            isCollapsed ? "-right-3 top-20" : "-right-3 top-20"
+          )}
         >
           {isCollapsed ? <ChevronLeft className="rotate-180 h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
         </button>

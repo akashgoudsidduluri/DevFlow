@@ -69,8 +69,10 @@ export const getIssuesByProject = async (req, res) => {
         const projectMembers = project.members || [];
         const isMember = projectMembers.some(member => member && member.equals(req.user._id));
         const isOwner = project.owner && project.owner.equals(req.user._id);
+        const isPublic = project.visibility === 'public';
 
-        if (!isMember && !isOwner) {
+        // Allow viewing issues if: member, owner, or project is public
+        if (!isMember && !isOwner && !isPublic) {
             return res.status(403).json({ message: "Not authorized to view issues in this project" });
         }
 

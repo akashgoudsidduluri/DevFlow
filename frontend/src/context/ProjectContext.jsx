@@ -28,9 +28,17 @@ export const ProjectProvider = ({ children }) => {
     setLoading(true);
     try {
       const response = await API.get(`/projects/${id}`);
-      setCurrentProject(response.data);
+      // Backend now returns { project, isMember, isOwner, isPublic }
+      const { project, isMember, isOwner, isPublic } = response.data;
+      const dataToStore = {
+        ...project,
+        isMember,
+        isOwner,
+        isPublic
+      };
+      setCurrentProject(dataToStore);
       setError(null);
-      return response.data;
+      return dataToStore;
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load project');
       throw err;

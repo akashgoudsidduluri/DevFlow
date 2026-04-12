@@ -1,6 +1,7 @@
 import Project from "../models/Project.js";
 import User from "../models/User.js";
 import Invitation from "../models/Invitation.js";
+import CollaborationRequest from "../models/CollaborationRequest.js";
 import { sendInvitationEmail } from "../utils/mailUtils.js";
 import mongoose from "mongoose";
 import crypto from "crypto";
@@ -168,12 +169,19 @@ export const getProjectById = async (req, res) => {
             .populate("members", "name email");
 
         if (project) {
-            // Validate that the user requesting the project has access to it (Safely)
+            // Validate that the user requesting the project has access to it
             const isMember = project.members.some(member => member && member._id && member._id.equals(req.user._id));
             const isOwner = project.owner && project.owner._id && project.owner._id.equals(req.user._id);
+            const isPublic = project.visibility === 'public';
 
-            if (isMember || isOwner) {
-                res.json(project);
+            // Allow access if: owner, member, or project is public
+            if (isMember || isOwner || isPublic) {
+                res.json({
+                    project,
+                    isMember,
+                    isOwner,
+                    isPublic
+                });
             } else {
                 res.status(403).json({ message: "Not authorized to access this project" });
             }
@@ -263,18 +271,24 @@ export const addMember = async (req, res) => {
             return res.status(400).json({ message: 'User is already a member' });
         }
 
-        const existingInvitation = await Invitation.findOne({
+        const pendingInvitation = await Invitation.findOne({
             projectId: project._id,
-            email
+            email,
+            status: 'pending'
         });
 
-        if (existingInvitation) {
-            if (existingInvitation.status === 'pending') {
-                return res.status(400).json({ message: 'This email already has a pending invitation' });
-            }
-            if (existingInvitation.status === 'accepted') {
-                return res.status(400).json({ message: 'This email has already been invited and joined' });
-            }
+        if (pendingInvitation) {
+            return res.status(400).json({ message: 'This email already has a pending invitation' });
+        }
+
+        const acceptedInvitation = await Invitation.findOne({
+            projectId: project._id,
+            email,
+            status: 'accepted'
+        });
+
+        if (acceptedInvitation) {
+            return res.status(400).json({ message: 'This email has already been invited and joined' });
         }
 
         const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
@@ -484,6 +498,205 @@ export const getPublicProjects = async (req, res) => {
         ]);
 
         res.json({ projects });
+    } catch (error) {
+        res.status(500).json({ message: error.message || "Server Error" });
+    }
+};
+
+// @desc    Request collaboration on a public project
+// @route   POST /api/projects/:id/request-collaboration
+// @access  Private
+export const requestCollaboration = async (req, res) => {
+    try {
+        const { message } = req.body;
+        const projectId = req.params.id;
+
+        if (!mongoose.isValidObjectId(projectId)) {
+            return res.status(400).json({ message: "Invalid Project ID format" });
+        }
+
+        const project = await Project.findById(projectId);
+        if (!project) {
+            return res.status(404).json({ message: "Project not found" });
+        }
+
+        // Check if user is already a member or owner
+        const isMember = project.members.some(member => member.equals(req.user._id));
+        const isOwner = project.owner.equals(req.user._id);
+
+        if (isMember || isOwner) {
+            return res.status(400).json({ message: "You are already a member of this project" });
+        }
+
+        // Check if a pending request already exists
+        const existingRequest = await CollaborationRequest.findOne({
+            project: projectId,
+            requestedBy: req.user._id,
+            status: 'pending'
+        });
+
+        if (existingRequest) {
+            return res.status(400).json({ message: "You have already sent a collaboration request" });
+        }
+
+        // Create collaboration request
+        const collaborationRequest = await CollaborationRequest.create({
+            project: projectId,
+            requestedBy: req.user._id,
+            message: message || "I'm interested in collaborating on this project"
+        });
+
+        res.status(201).json({ 
+            message: "Collaboration request sent successfully",
+            request: collaborationRequest 
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message || "Server Error" });
+    }
+};
+
+// @desc    Get pending collaboration requests for a project
+// @route   GET /api/projects/:id/collaboration-requests
+// @access  Private
+export const getCollaborationRequests = async (req, res) => {
+    try {
+        const projectId = req.params.id;
+
+        if (!mongoose.isValidObjectId(projectId)) {
+            return res.status(400).json({ message: "Invalid Project ID format" });
+        }
+
+        const project = await Project.findById(projectId);
+        if (!project) {
+            return res.status(404).json({ message: "Project not found" });
+        }
+
+        // Only project owner can view collaboration requests
+        if (!project.owner.equals(req.user._id)) {
+            return res.status(403).json({ message: "Only project owner can view collaboration requests" });
+        }
+
+        const requests = await CollaborationRequest.find({
+            project: projectId,
+            status: 'pending'
+        }).populate('requestedBy', 'name email avatarUrl');
+
+        res.json({ requests });
+    } catch (error) {
+        res.status(500).json({ message: error.message || "Server Error" });
+    }
+};
+
+// @desc    Accept a collaboration request
+// @route   POST /api/projects/:id/collaboration-requests/:requestId/accept
+// @access  Private
+export const acceptCollaborationRequest = async (req, res) => {
+    try {
+        const { id, requestId } = req.params;
+
+        if (!mongoose.isValidObjectId(id) || !mongoose.isValidObjectId(requestId)) {
+            return res.status(400).json({ message: "Invalid ID format" });
+        }
+
+        const project = await Project.findById(id);
+        if (!project) {
+            return res.status(404).json({ message: "Project not found" });
+        }
+
+        // Only project owner can accept requests
+        if (!project.owner.equals(req.user._id)) {
+            return res.status(403).json({ message: "Only project owner can accept requests" });
+        }
+
+        const collaborationRequest = await CollaborationRequest.findById(requestId);
+        if (!collaborationRequest) {
+            return res.status(404).json({ message: "Request not found" });
+        }
+
+        if (collaborationRequest.status !== 'pending') {
+            return res.status(400).json({ message: "Request is no longer pending" });
+        }
+
+        // Add user to project members
+        if (!project.members.includes(collaborationRequest.requestedBy)) {
+            project.members.push(collaborationRequest.requestedBy);
+            await project.save();
+        }
+
+        // Update request status
+        collaborationRequest.status = 'accepted';
+        await collaborationRequest.save();
+
+        res.json({ 
+            message: "Collaboration request accepted",
+            request: collaborationRequest 
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message || "Server Error" });
+    }
+};
+
+// @desc    Deny a collaboration request
+// @route   POST /api/projects/:id/collaboration-requests/:requestId/deny
+// @access  Private
+export const denyCollaborationRequest = async (req, res) => {
+    try {
+        const { id, requestId } = req.params;
+
+        if (!mongoose.isValidObjectId(id) || !mongoose.isValidObjectId(requestId)) {
+            return res.status(400).json({ message: "Invalid ID format" });
+        }
+
+        const project = await Project.findById(id);
+        if (!project) {
+            return res.status(404).json({ message: "Project not found" });
+        }
+
+        // Only project owner can deny requests
+        if (!project.owner.equals(req.user._id)) {
+            return res.status(403).json({ message: "Only project owner can deny requests" });
+        }
+
+        const collaborationRequest = await CollaborationRequest.findById(requestId);
+        if (!collaborationRequest) {
+            return res.status(404).json({ message: "Request not found" });
+        }
+
+        if (collaborationRequest.status !== 'pending') {
+            return res.status(400).json({ message: "Request is no longer pending" });
+        }
+
+        // Update request status
+        collaborationRequest.status = 'denied';
+        await collaborationRequest.save();
+
+        res.json({ 
+            message: "Collaboration request denied",
+            request: collaborationRequest 
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message || "Server Error" });
+    }
+};
+
+// @desc    Check if user has a pending collaboration request
+// @route   GET /api/projects/:id/check-collaboration-request
+// @access  Private
+export const checkCollaborationRequest = async (req, res) => {
+    try {
+        const projectId = req.params.id;
+
+        if (!mongoose.isValidObjectId(projectId)) {
+            return res.status(400).json({ message: "Invalid Project ID format" });
+        }
+
+        const request = await CollaborationRequest.findOne({
+            project: projectId,
+            requestedBy: req.user._id,
+            status: 'pending'
+        });
+
+        res.json({ hasPendingRequest: !!request });
     } catch (error) {
         res.status(500).json({ message: error.message || "Server Error" });
     }

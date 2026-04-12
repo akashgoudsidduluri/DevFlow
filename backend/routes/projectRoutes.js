@@ -9,7 +9,9 @@ import {
     verifyInvitation,
     getProjectInvitations,
     removeMember,
-    getPublicProjects
+    getPublicProjects,
+    requestCollaboration,
+    checkCollaborationRequest
 } from "../controllers/projectController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
@@ -37,5 +39,9 @@ router.route("/:id/invitations")
 
 router.route("/invitations/verify")
     .post(protect, verifyInvitation);
+
+// Collaboration request endpoints
+router.post("/:id/request-collaboration", protect, requestCollaboration);
+router.get("/:id/check-collaboration-request", protect, checkCollaborationRequest);
 
 export default router;

@@ -8,9 +8,10 @@ import AddMemberForm from './AddMemberForm';
 import CreateIssueForm from './CreateIssueForm';
 import ProjectStats from './ProjectStats';
 import DiscussionTab from './Discussion/DiscussionTab';
+import RequestCollaborationModal from './RequestCollaborationModal';
 import GlassPanel from '../../shared/GlassPanel';
 import Button from '../../shared/Button';
-import { ChevronLeft, Github, Info, Users, Layout, Plus } from 'lucide-react';
+import { ChevronLeft, Github, Info, Users, Layout, Plus, MessageSquare } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 
 const ProjectDetails = () => {
@@ -19,6 +20,7 @@ const ProjectDetails = () => {
   const { issues } = useIssue();
   const [activeTab, setActiveTab] = useState('board'); // 'board', 'dashboard', 'discussion'
   const [pendingInvites, setPendingInvites] = useState([]);
+  const [showCollaborationModal, setShowCollaborationModal] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -131,7 +133,17 @@ const ProjectDetails = () => {
                             <Layout className="h-5 w-5 text-primary" />
                             Task & Issue Board
                         </h2>
-                        <CreateIssueForm projectId={id} />
+                        {currentProject?.isMember ? (
+                            <CreateIssueForm projectId={id} />
+                        ) : (
+                            <Button 
+                              onClick={() => setShowCollaborationModal(true)}
+                              className="gap-2"
+                            >
+                              <MessageSquare className="h-4 w-4" />
+                              Request Collaboration
+                            </Button>
+                        )}
                     </div>
                     <IssueBoard projectId={id} />
                 </div>
@@ -168,24 +180,35 @@ const ProjectDetails = () => {
                     issues={issues}
                 />
                 
-                <div className="mt-8 pt-6 border-t border-border/50">
-                    <h4 className="text-xs font-bold mb-4 flex items-center gap-2 text-primary">
-                        <Plus className="h-3 w-3" />
-                        Expand the Core
-                    </h4>
-                    <AddMemberForm projectId={id} onMemberAdded={loadInvites} />
-                </div>
+                {currentProject?.isOwner && (
+                    <div className="mt-8 pt-6 border-t border-border/50">
+                        <h4 className="text-xs font-bold mb-4 flex items-center gap-2 text-primary">
+                            <Plus className="h-3 w-3" />
+                            Expand the Core
+                        </h4>
+                        <AddMemberForm projectId={id} onMemberAdded={loadInvites} />
+                    </div>
+                )}
             </GlassPanel>
 
-            <GlassPanel className="p-1 justify-center items-center h-12 flex relative">
-               {/* Decorative Gradient Line */}
-               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/10 to-transparent opacity-50" />
-               <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground z-10">
-                   DevFlow Engineering Protocol v3.0
-               </span>
-            </GlassPanel>
+            {currentProject?.isMember && (
+                <GlassPanel className="p-1 justify-center items-center h-12 flex relative">
+                   {/* Decorative Gradient Line */}
+                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/10 to-transparent opacity-50" />
+                   <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground z-10">
+                       DevFlow Engineering Protocol v3.0
+                   </span>
+                </GlassPanel>
+            )}
         </section>
       </div>
+
+      <RequestCollaborationModal 
+        projectId={id}
+        projectName={currentProject?.name}
+        isOpen={showCollaborationModal}
+        onClose={() => setShowCollaborationModal(false)}
+      />
     </div>
   );
 };

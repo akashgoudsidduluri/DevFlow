@@ -31,7 +31,7 @@ const invitationSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-// Index for auto-expiration of MongoDB documents
-invitationSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+// Auto-delete expired invitations after 24 hours (86400 seconds)
+invitationSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 86400 });
 
 export default mongoose.model('Invitation', invitationSchema);

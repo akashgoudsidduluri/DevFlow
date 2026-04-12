@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ProjectProvider } from './context/ProjectContext';
 import { IssueProvider } from './context/IssueContext';
 import { SocketProvider } from './context/SocketContext';
+import { LayoutProvider, useLayout } from './context/LayoutContext';
 import Sidebar from './components/layout/Sidebar';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoginForm from './components/Auth/LoginForm';
@@ -18,14 +19,15 @@ import './App.css';
 
 const LayoutWrapper = ({ children }) => {
   const { user } = useAuth();
+  const { isCollapsed } = useLayout();
   
   if (!user) return children;
 
   return (
     <div className="flex bg-background min-h-screen">
       <Sidebar />
-      <main className="flex-1 transition-all duration-500 pl-24 md:pl-28"> 
-        {/* Adjusted padding for Sidebar. Sidebar is fixed, so we need left margin/padding */}
+      <main className={`flex-1 transition-all duration-500 ${isCollapsed ? 'pl-20 md:pl-20' : 'pl-64 md:pl-64'}`}> 
+        {/* Dynamically adjust padding based on sidebar collapse state */}
         <div className="w-full">
             {children}
         </div>
@@ -41,8 +43,9 @@ function App() {
         <ProjectProvider>
           <SocketProvider>
             <IssueProvider>
-              <LayoutWrapper>
-              <Routes>
+              <LayoutProvider>
+                <LayoutWrapper>
+                <Routes>
                 <Route path="/login" element={<LoginForm />} />
                 <Route path="/register" element={<RegisterForm />} />
                 <Route
@@ -103,7 +106,8 @@ function App() {
                 />
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
               </Routes>
-            </LayoutWrapper>
+                </LayoutWrapper>
+              </LayoutProvider>
             </IssueProvider>
           </SocketProvider>
         </ProjectProvider>
