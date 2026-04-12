@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { Search, Compass, Users, Sparkles, UserPlus, UserCheck, AlertCircle, Loader2 } from 'lucide-react';
 import API from '../../utils/api';
 import GlassPanel from '../shared/GlassPanel';
@@ -154,17 +155,17 @@ const Explore = () => {
                             {users.length > 0 ? (
                                 users.map(user => (
                                     <GlassPanel key={user._id} className="p-4 flex items-center justify-between group hover:border-primary/30 transition-all">
-                                        <div className="flex items-center gap-3">
+                                        <Link to={`/profile/${user._id}`} className="flex items-center gap-3 min-w-0 flex-1">
                                             <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center font-bold text-primary overflow-hidden">
                                                 {user.avatarUrl ? (
                                                     <img src={user.avatarUrl} alt={user.name} className="h-full w-full object-cover" />
                                                 ) : user.name.charAt(0)}
                                             </div>
-                                            <div>
+                                            <div className="min-w-0">
                                                 <h4 className="text-sm font-bold text-foreground truncate max-w-[120px]">{user.name}</h4>
                                                 <p className="text-[10px] text-muted font-medium">New Collaborator</p>
                                             </div>
-                                        </div>
+                                        </Link>
                                         <button 
                                             onClick={() => toggleFollow(user)}
                                             className={cn(

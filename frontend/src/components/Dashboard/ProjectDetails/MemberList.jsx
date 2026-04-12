@@ -4,6 +4,7 @@ import { cn } from '../../../lib/utils';
 import { useProject } from '../../../context/ProjectContext';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
+import { Link } from 'react-router-dom';
 
 const MemberList = ({ members, ownerId, pendingInvites = [], issues = [] }) => {
   const { id: projectId } = useParams();
@@ -57,7 +58,9 @@ const MemberList = ({ members, ownerId, pendingInvites = [], issues = [] }) => {
                </div>
                <div className="flex flex-col">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">{member.name}</span>
+                    <Link to={`/profile/${member._id}`} className="text-sm font-bold text-foreground group-hover:text-primary transition-colors hover:underline">
+                      {member.name}
+                    </Link>
                     {isBusy && <span className="text-[8px] font-black text-red-500 uppercase tracking-tighter">Busy</span>}
                   </div>
                   <div className="flex items-center gap-1 text-[10px] font-medium text-muted">

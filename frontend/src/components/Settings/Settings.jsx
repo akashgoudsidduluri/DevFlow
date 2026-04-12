@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import GlassPanel from '../shared/GlassPanel';
 import Button from '../shared/Button';
 import { User, Shield, Wand2, Mail, Info, Lock, Eye, EyeOff } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import axios from 'axios';
+import API from '../../utils/api';
 
 const Settings = () => {
   const { user, updateProfile } = useAuth();
@@ -24,6 +24,20 @@ const Settings = () => {
   const [passwordMessage, setPasswordMessage] = useState({ type: '', text: '' });
   const [isPasswordLoading, setIsPasswordLoading] = useState(false);
   const [showPasswords, setShowPasswords] = useState({ current: false, new: false, confirm: false });
+
+  useEffect(() => {
+    if (profileMessage.text) {
+      const timer = setTimeout(() => setProfileMessage({ type: '', text: '' }), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [profileMessage.text]);
+
+  useEffect(() => {
+    if (passwordMessage.text) {
+      const timer = setTimeout(() => setPasswordMessage({ type: '', text: '' }), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [passwordMessage.text]);
 
   const handleGenerateAvatar = () => {
     const seed = name || user?.name || Math.random().toString(36).substring(7);
@@ -71,12 +85,10 @@ const Settings = () => {
     }
 
     try {
-      await axios.post('/api/users/change-password', {
+      await API.post('/users/change-password', {
         currentPassword,
         newPassword,
         confirmPassword
-      }, {
-        headers: { 'Content-Type': 'application/json' }
       });
 
       setPasswordMessage({ type: 'success', text: 'Password changed successfully!' });

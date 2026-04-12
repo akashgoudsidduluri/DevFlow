@@ -11,7 +11,7 @@ export const SocketProvider = ({ children }) => {
         // Initialize socket connection with proper error handling
         socketRef.current = io('http://localhost:5000', {
             withCredentials: true,
-            transports: ['websocket', 'polling'], // Fallback to polling if websocket fails
+            transports: ['polling', 'websocket'], // Use polling first to avoid initial websocket startup warnings
             reconnection: true,
             reconnectionDelay: 1000,
             reconnectionDelayMax: 5000,
