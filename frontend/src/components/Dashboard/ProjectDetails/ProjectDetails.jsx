@@ -39,7 +39,7 @@ const ProjectDetails = () => {
     </div>
   );
   
-  if (error) return (
+  if (error && !currentProject) return (
       <div className="p-10">
           <GlassPanel className="p-6 border-red-100 bg-red-50/30">
               <h2 className="text-red-600 font-bold">Error Loading Project</h2>
@@ -84,16 +84,15 @@ const ProjectDetails = () => {
           </div>
 
           <div className="flex gap-3">
-            {currentProject.githubUrl && (
-              <Button as="a" href={currentProject.githubUrl} target="_blank" variant="secondary" className="gap-2">
-                <Github className="h-4 w-4" />
-                Repository
-              </Button>
-            )}
-            <Button variant="primary" className="gap-2">
-                <Plus className="h-4 w-4" />
-                Invite
-            </Button>
+            <a
+              className="inline-flex items-center justify-center rounded-xl font-medium transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:pointer-events-none bg-surface text-surface-foreground hover:bg-surface/80 border border-border shadow-sm px-4 py-2 text-base gap-2"
+              href="https://github.com/akashgoudsidduluri/DevFlow"
+              target="_blank"
+              rel="noreferrer"
+            >
+              <Github className="h-4 w-4" />
+              Repository
+            </a>
           </div>
         </div>
       </header>

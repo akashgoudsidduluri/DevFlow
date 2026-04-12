@@ -240,47 +240,61 @@ export const deleteProject = async (req, res) => {
 // @access  Private
 export const addMember = async (req, res) => {
     try {
-         const { email } = req.body;
-         const project = await Project.findById(req.params.id);
+        const email = req.body.email?.trim().toLowerCase();
+        if (!email) {
+            return res.status(400).json({ message: 'Please provide a valid email address' });
+        }
 
-         if (project) {
-             if (!project.owner.equals(req.user._id)) {
-                 return res.status(403).json({ message: "Not authorized, owner only" });
-             }
+        const project = await Project.findById(req.params.id);
+        if (!project) {
+            return res.status(404).json({ message: 'Project not found' });
+        }
 
-             // Check if already a member
-             const isMember = project.members.some(async (mId) => {
-                 const u = await User.findById(mId);
-                 return u && u.email === email;
-             });
-             
-             // Simple duplicate check for now (refine as needed)
-             const existingMember = await User.findOne({ email });
-             if (existingMember && project.members.includes(existingMember._id)) {
-                 return res.status(400).json({ message: "User is already a member" });
-             }
+        if (!project.owner.equals(req.user._id)) {
+            return res.status(403).json({ message: 'Not authorized, owner only' });
+        }
 
-             const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-             const token = crypto.randomBytes(32).toString('hex');
-             const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+        if (req.user.email.toLowerCase() === email) {
+            return res.status(400).json({ message: 'You are already a project member' });
+        }
 
-             await Invitation.create({
-                 email,
-                 projectId: project._id,
-                 inviterId: req.user._id,
-                 token,
-                 expiresAt
-             });
+        const existingMember = await User.findOne({ email });
+        if (existingMember && project.members.some((mId) => mId.toString() === existingMember._id.toString())) {
+            return res.status(400).json({ message: 'User is already a member' });
+        }
 
-             const verificationLink = `${frontendUrl}/verify-invite/${token}`;
-             await sendInvitationEmail(email, req.user.name, project.name, verificationLink);
-             
-             res.json({ message: "Invitation protocol initiated. Email dispatched." });
-         } else {
-             res.status(404).json({ message: "Project not found" });
-         }
+        const existingInvitation = await Invitation.findOne({
+            projectId: project._id,
+            email
+        });
+
+        if (existingInvitation) {
+            if (existingInvitation.status === 'pending') {
+                return res.status(400).json({ message: 'This email already has a pending invitation' });
+            }
+            if (existingInvitation.status === 'accepted') {
+                return res.status(400).json({ message: 'This email has already been invited and joined' });
+            }
+        }
+
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        const token = crypto.randomBytes(32).toString('hex');
+        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+        await Invitation.create({
+            email,
+            projectId: project._id,
+            inviterId: req.user._id,
+            token,
+            expiresAt
+        });
+
+        const verificationLink = `${frontendUrl}/verify-invite/${token}`;
+        await sendInvitationEmail(email, req.user.name, project.name, verificationLink);
+
+        res.json({ message: 'Invitation protocol initiated. Email dispatched.' });
     } catch (error) {
-        res.status(500).json({ message: error.message || "Server Error" });
+        res.status(500).json({ message: error.message || 'Server Error' });
     }
 };
 

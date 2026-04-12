@@ -10,7 +10,11 @@ const AddMemberForm = ({ projectId, onMemberAdded }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSuccess(false);
+    
+    if (!email.trim()) {
+      return;
+    }
+
     try {
       await addMember(projectId, email);
       setEmail(''); 
@@ -19,7 +23,10 @@ const AddMemberForm = ({ projectId, onMemberAdded }) => {
       
       // Clear success message after 3 seconds
       setTimeout(() => setSuccess(false), 3000);
-    } catch (err) {}
+    } catch (err) {
+      // Error is already set in context, just stop here
+      console.error('Failed to add member:', err);
+    }
   };
 
   return (
