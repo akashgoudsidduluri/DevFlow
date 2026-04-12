@@ -2,14 +2,16 @@ import React, { useEffect, useState } from 'react';
 import { useIssue } from '../../../../context/IssueContext';
 import { useAuth } from '../../../../context/AuthContext';
 import IssueColumn from './IssueColumn';
+import IssueDetailModal from '../../../Issue/IssueDetailModal';
 import { Search, Filter, ShieldAlert, User, Layers, Info } from 'lucide-react';
 import { cn } from '../../../../lib/utils';
 import GlassPanel from '../../../shared/GlassPanel';
 import Skeleton from '../../../shared/Skeleton';
 
-const IssueBoard = ({ projectId }) => {
+const IssueBoard = ({ projectId, projectMembers = [], ownerId, isMember, isOwner }) => {
   const { issues, loading, error, getIssuesByProject, retryFetch } = useIssue();
   const { user } = useAuth();
+  const [selectedIssueId, setSelectedIssueId] = useState(null);
   
   const [searchTerm, setSearchTerm] = useState('');
   const [filterMode, setFilterMode] = useState('all');
@@ -128,9 +130,18 @@ const IssueBoard = ({ projectId }) => {
             key={token}
             status={statusLabels[token]}
             issues={filteredIssues.filter(issue => issue.status === token)}
+            onOpenDetail={setSelectedIssueId}
           />
         ))}
       </div>
+      {selectedIssueId && (
+        <IssueDetailModal
+          issueId={selectedIssueId}
+          onClose={() => setSelectedIssueId(null)}
+          isMember={isMember}
+          isOwner={isOwner}
+        />
+      )}
     </div>
   );
 };

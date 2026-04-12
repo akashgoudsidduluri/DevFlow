@@ -14,7 +14,7 @@ import GlassPanel from '../../../shared/GlassPanel';
 import Button from '../../../shared/Button';
 import AssignmentDropdown from './AssignmentDropdown';
 
-const IssueCard = ({ issue }) => {
+const IssueCard = ({ issue, onOpenDetail }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(issue.title);
   const [description, setDescription] = useState(issue.description);
@@ -117,7 +117,10 @@ const IssueCard = ({ issue }) => {
       )}
 
       <div className="flex flex-col gap-4">
-        <div className="space-y-1">
+        <div
+          onClick={() => onOpenDetail?.(issue._id)}
+          className="space-y-1 cursor-pointer"
+        >
           <div className="flex justify-between items-start">
              <h4 className={cn("text-sm font-bold tracking-tight transition-colors", issue.status === 'done' ? "text-muted line-through" : "text-foreground")}>
                {issue.title}
@@ -159,10 +162,10 @@ const IssueCard = ({ issue }) => {
            </div>
 
            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button onClick={() => setIsEditing(true)} className="p-1.5 hover:bg-primary/5 text-muted hover:text-primary rounded-lg transition-colors">
+                <button onClick={(e) => { e.stopPropagation(); setIsEditing(true); }} className="p-1.5 hover:bg-primary/5 text-muted hover:text-primary rounded-lg transition-colors">
                     <Edit3 className="h-3.5 w-3.5" />
                 </button>
-                <button onClick={handleDelete} className="p-1.5 hover:bg-red-50 text-muted hover:text-red-500 rounded-lg transition-colors">
+                <button onClick={(e) => { e.stopPropagation(); handleDelete(); }} className="p-1.5 hover:bg-red-50 text-muted hover:text-red-500 rounded-lg transition-colors">
                     <Trash2 className="h-3.5 w-3.5" />
                 </button>
            </div>
@@ -172,7 +175,7 @@ const IssueCard = ({ issue }) => {
         <div className="pt-3 border-t border-border/50">
             {issue.status === 'todo' && (
                 <button 
-                  onClick={() => handleStatusChange('in_progress')}
+                  onClick={(e) => { e.stopPropagation(); handleStatusChange('in_progress'); }}
                   className="w-full flex items-center justify-center gap-2 py-1.5 rounded-xl bg-primary/5 text-primary text-[10px] font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all active:scale-95"
                 >
                     <PlayCircle className="h-3.5 w-3.5" />
@@ -181,7 +184,7 @@ const IssueCard = ({ issue }) => {
             )}
             {issue.status === 'in_progress' && (
                 <button 
-                  onClick={() => handleStatusChange('done')}
+                  onClick={(e) => { e.stopPropagation(); handleStatusChange('done'); }}
                   className="w-full flex items-center justify-center gap-2 py-1.5 rounded-xl bg-green-500/5 text-green-600 text-[10px] font-black uppercase tracking-widest hover:bg-green-600 hover:text-white transition-all active:scale-95"
                 >
                     <CheckCircle2 className="h-3.5 w-3.5" />

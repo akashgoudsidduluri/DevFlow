@@ -8,6 +8,7 @@ import cookieParser from "cookie-parser";
 import userRoutes from "./routes/userRoutes.js";
 import projectRoutes from "./routes/projectRoutes.js";
 import issueRoutes from "./routes/issueRoutes.js";
+import commentRoutes from "./routes/commentRoutes.js";
 import discussionRoutes from "./routes/discussionRoutes.js";
 import { notFound, errorHandler } from "./middleware/errorMiddleware.js";
 import { apiLimiter } from "./middleware/rateLimiter.js";
@@ -56,6 +57,7 @@ app.use('/api', apiLimiter);
 app.use("/api/users", userRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/issues", issueRoutes);
+app.use("/api/comments", commentRoutes);
 app.use("/api/discussions", discussionRoutes);
 
 app.get("/", (req, res) => {

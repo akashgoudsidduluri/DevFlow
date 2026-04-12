@@ -145,7 +145,13 @@ const ProjectDetails = () => {
                             </Button>
                         )}
                     </div>
-                    <IssueBoard projectId={id} />
+                    <IssueBoard 
+                      projectId={id} 
+                      projectMembers={currentProject.members || []}
+                      ownerId={currentProject.owner?._id || currentProject.owner}
+                      isMember={currentProject.isMember}
+                      isOwner={currentProject.isOwner}
+                    />
                 </div>
             )}
 

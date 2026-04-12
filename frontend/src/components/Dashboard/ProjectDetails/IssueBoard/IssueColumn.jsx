@@ -3,7 +3,7 @@ import IssueCard from './IssueCard';
 import { AlertTriangle, Timer, CheckCircle2 } from 'lucide-react';
 import { cn } from '../../../../lib/utils';
 
-const IssueColumn = ({ status, issues }) => {
+const IssueColumn = ({ status, issues, onOpenDetail }) => {
   const isBottleneck = status === 'In Progress' && issues.length > 3;
 
   // Correct icons
@@ -50,7 +50,7 @@ const IssueColumn = ({ status, issues }) => {
             </div>
         ) : (
             issues.map(issue => (
-                <IssueCard key={issue._id} issue={issue} />
+                <IssueCard key={issue._id} issue={issue} onOpenDetail={onOpenDetail} />
             ))
         )}
       </div>

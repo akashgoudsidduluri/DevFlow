@@ -1,6 +1,7 @@
 import Issue from "../models/Issue.js";
 import Project from "../models/Project.js";
 import User from "../models/User.js";
+import Comment from "../models/Comment.js";
 import mongoose from "mongoose";
 import { getIO } from "../utils/socketManager.js";
 
@@ -77,14 +78,57 @@ export const getIssuesByProject = async (req, res) => {
         }
 
         const issues = await Issue.find({ project: req.params.projectId })
-            .populate("createdBy", "name email")
-            .populate("assignedTo", "name email")
+            .populate("createdBy", "name email avatarUrl")
+            .populate("assignedTo", "name email avatarUrl")
             .sort({ createdAt: -1 });
 
         res.json(issues);
     } catch (error) {
         console.error("GET_ISSUES_ERROR:", error);
         res.status(500).json({ message: error.message || "Server Error" });
+    }
+};
+
+const getAccessFlags = async (project, user) => {
+    const projectMembers = project.members || [];
+    const isMember = projectMembers.some(member => member && member.equals(user._id));
+    const isOwner = project.owner && project.owner.equals(user._id);
+    const isPublic = project.visibility === 'public';
+    return { isMember, isOwner, isPublic };
+};
+
+export const getIssueById = async (req, res) => {
+    try {
+        if (!mongoose.isValidObjectId(req.params.id)) {
+            return res.status(400).json({ message: 'Invalid issue ID format' });
+        }
+
+        const issue = await Issue.findById(req.params.id)
+            .populate('createdBy', 'name avatarUrl')
+            .populate('assignedTo', 'name avatarUrl');
+
+        if (!issue) {
+            return res.status(404).json({ message: 'Issue not found' });
+        }
+
+        const project = await Project.findById(issue.project);
+        if (!project) {
+            return res.status(404).json({ message: 'Project not found' });
+        }
+
+        const { isMember, isOwner, isPublic } = await getAccessFlags(project, req.user);
+        if (!isMember && !isOwner && !isPublic) {
+            return res.status(403).json({ message: 'Not authorized to view this issue' });
+        }
+
+        const comments = await Comment.find({ issueId: issue._id })
+            .sort({ createdAt: 1 })
+            .populate('userId', 'name avatarUrl');
+
+        res.json({ issue, comments, isMember, isPublic });
+    } catch (error) {
+        console.error('GET_ISSUE_DETAIL_ERROR:', error);
+        res.status(500).json({ message: error.message || 'Server Error' });
     }
 };
 

@@ -81,7 +81,7 @@ const MemberList = ({ members, ownerId, pendingInvites = [], issues = [] }) => {
                     {isOwnerOfProject && (
                         <button 
                             onClick={() => handleRemove(member._id, member.name)}
-                            className="p-1.5 bg-red-100/10 text-red-500 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-500 hover:text-white transition-all"
+                            className="p-1.5 bg-red-100/10 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition-all"
                             title="Remove Member"
                         >
                             <UserMinus className="h-4 w-4" />

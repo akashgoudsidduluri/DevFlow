@@ -2,6 +2,7 @@ import express from "express";
 import {
     createIssue,
     getIssuesByProject,
+    getIssueById,
     updateIssue,
     deleteIssue,
     assignIssue,
@@ -20,6 +21,7 @@ router.route("/project/:projectId")
 router.get("/project/:projectId/suggestions", protect, getAssignmentSuggestions);
 
 router.route("/:id")
+    .get(protect, getIssueById)
     .put(protect, updateIssue)
     .delete(protect, deleteIssue);
 
