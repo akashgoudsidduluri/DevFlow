@@ -9,6 +9,7 @@ import {
     CheckCircle2,
     PlayCircle,
     AlertTriangle,
+    Zap,
     Hourglass
 } from 'lucide-react';
 import { cn } from '../../../../lib/utils';
@@ -20,7 +21,9 @@ const IssueCard = ({ issue, onOpenDetail }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(issue.title);
   const [description, setDescription] = useState(issue.description);
+  const [priority, setPriority] = useState(issue.priority);
   const { updateIssue, deleteIssue, loading } = useIssue();
+  const [isDelayed, setIsDelayed] = useState(false);
   const [timeMetrics, setTimeMetrics] = useState({ daysInProgress: 0, daysUntilDeadline: null, isDueSoon: false });
 
   // Calculate time metrics
@@ -53,33 +56,43 @@ const IssueCard = ({ issue, onOpenDetail }) => {
     return () => clearInterval(interval);
   }, [issue.status, issue.inProgressSince, issue.deadline]);
 
-  const isDelayed = issue.status === 'in_progress' && timeMetrics.daysInProgress > 2;
+  useEffect(() => {
+    let interval;
+    if (issue.status === 'in_progress' && issue.inProgressSince) {
+      interval = setInterval(() => {
+        const diff = Date.now() - new Date(issue.inProgressSince).getTime();
+        const threshold = 48 * 60 * 60 * 1000; // 48 Hours
+        if (diff > threshold) {
+          setIsDelayed(true);
+        } else {
+          setIsDelayed(false);
+        }
+      }, 5000); // Check every 5s
+    } else {
+      setIsDelayed(false);
+    }
+    return () => clearInterval(interval);
+  }, [issue.status, issue.inProgressSince]);
 
   const handleUpdate = async (e) => {
     e.preventDefault();
     try {
-      await updateIssue(issue._id, { title, description });
+      await updateIssue(issue._id, { title, description, priority });
       setIsEditing(false);
-    } catch {
-      // Issue errors are surfaced through context state.
-    }
+    } catch (err) {}
   };
 
   const handleStatusChange = async (newStatus) => {
     try {
       await updateIssue(issue._id, { status: newStatus });
-    } catch {
-      // Issue errors are surfaced through context state.
-    }
+    } catch (err) {}
   };
 
   const handleDelete = async () => {
     if (window.confirm(`Terminate issue: "${issue.title}"?`)) {
       try {
         await deleteIssue(issue._id);
-      } catch {
-        // Issue errors are surfaced through context state.
-      }
+      } catch (err) {}
     }
   };
 
@@ -90,6 +103,7 @@ const IssueCard = ({ issue, onOpenDetail }) => {
   };
 
   const config = priorityConfig[issue.priority] || priorityConfig.low;
+  const isOverdue = issue.status !== 'done' && issue.deadline && new Date(issue.deadline) < new Date();
 
   if (isEditing) {
     return (
@@ -120,16 +134,15 @@ const IssueCard = ({ issue, onOpenDetail }) => {
   }
 
   return (
-    <GlassPanel 
-        className={cn(
-            "p-5 border-l-4 relative group transition-all duration-300",
-            issue.priority === 'high' ? "border-l-red-500" : issue.priority === 'medium' ? "border-l-amber-500" : "border-l-primary",
-            issue.status === 'done' ? "bg-green-50/40 opacity-70" : timeMetrics.isDueSoon ? "bg-amber-50/40 hover:bg-amber-50/60" : "bg-white/60 hover:bg-white"
-        )}
-    >
-      {/* Visual Delay Indicator */}
+    <div className={cn(
+      "group relative flex flex-col gap-4 rounded-xl border transition-all p-4",
+      issue.status === 'done' 
+        ? "bg-slate-50/50 border-slate-200 opacity-80 shadow-none" 
+        : "bg-white border-slate-200 shadow-sm hover:border-slate-300 hover:shadow-md"
+    )}>
+      {/* Status Badges */}
       {isDelayed && (
-          <div className="absolute top-0 right-0 px-2 py-0.5 bg-red-500 text-white text-[8px] font-black uppercase tracking-widest rounded-bl-lg shadow-sm animate-pulse z-10 flex items-center gap-1">
+          <div className="absolute -top-2 -right-2 px-2 py-0.5 bg-red-600 text-white text-[9px] font-bold uppercase tracking-tight rounded-md shadow-lg flex items-center gap-1 z-10">
               <Clock className="h-2.5 w-2.5" />
               Delayed
           </div>
@@ -137,7 +150,7 @@ const IssueCard = ({ issue, onOpenDetail }) => {
 
       {/* Due Soon Indicator */}
       {timeMetrics.isDueSoon && !isDelayed && (
-          <div className="absolute top-0 right-0 px-2 py-0.5 bg-amber-500 text-white text-[8px] font-black uppercase tracking-widest rounded-bl-lg shadow-sm animate-pulse z-10 flex items-center gap-1">
+          <div className="absolute -top-2 -right-2 px-2 py-0.5 bg-amber-500 text-white text-[9px] font-bold uppercase tracking-tight rounded-md shadow-lg flex items-center gap-1 z-10">
               <AlertTriangle className="h-2.5 w-2.5" />
               Due Soon
           </div>
@@ -149,33 +162,32 @@ const IssueCard = ({ issue, onOpenDetail }) => {
           className="space-y-1 cursor-pointer"
         >
           <div className="flex justify-between items-start gap-2">
-             <h4 className={cn("text-sm font-bold tracking-tight transition-colors flex-1", issue.status === 'done' ? "text-muted line-through" : "text-foreground")}>
+             <h4 className={cn("text-sm font-semibold tracking-tight transition-colors flex-1", issue.status === 'done' ? "text-slate-400" : "text-slate-900")}>
                {issue.title}
              </h4>
-             <div className={cn("flex items-center gap-1.2 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest border shrink-0", config.color, config.bg, config.border)}>
-                 <ArrowUpCircle className="h-2.5 w-2.5" />
+             <div className={cn("flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-tight border shrink-0", config.color, config.bg, config.border)}>
                  {issue.priority}
              </div>
           </div>
           
-          <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-2">
-            {issue.description || 'No system logs provided for this task.'}
+          <p className="text-xs text-slate-500 leading-relaxed line-clamp-2">
+            {issue.description || 'No description provided.'}
           </p>
 
           {/* Time Metrics */}
-          <div className="flex gap-2 pt-2 flex-wrap text-[8px] text-muted-foreground">
+          <div className="flex gap-2 pt-1 flex-wrap text-[9px] font-medium text-slate-400">
             {timeMetrics.daysInProgress > 0 && issue.status === 'in_progress' && (
-              <div className={cn("px-2 py-0.5 rounded-lg flex items-center gap-1", timeMetrics.daysInProgress > 2 ? "bg-amber-100/50" : "bg-neutral-100")}>
-                <Hourglass className={cn("h-2.5 w-2.5", timeMetrics.daysInProgress > 2 ? "text-amber-600" : "text-muted")} />
+              <div className={cn("flex items-center gap-1", timeMetrics.daysInProgress > 2 && "text-amber-600")}>
+                <Hourglass className="h-2.5 w-2.5" />
                 {timeMetrics.daysInProgress}d in progress
               </div>
             )}
             {timeMetrics.daysUntilDeadline !== null && (
               <div className={cn(
-                "px-2 py-0.5 rounded-lg flex items-center gap-1 font-medium",
-                timeMetrics.daysUntilDeadline < 0 ? "bg-red-100/50 text-red-700" : 
-                timeMetrics.daysUntilDeadline <= 2 ? "bg-amber-100/50 text-amber-700" : 
-                "bg-neutral-100 text-muted"
+                "flex items-center gap-1",
+                timeMetrics.daysUntilDeadline < 0 ? "text-red-600" : 
+                timeMetrics.daysUntilDeadline <= 2 ? "text-amber-600" : 
+                "text-slate-400"
               )}>
                 <Calendar className="h-2.5 w-2.5" />
                 {timeMetrics.daysUntilDeadline < 0 ? `${Math.abs(timeMetrics.daysUntilDeadline)}d overdue` : `${timeMetrics.daysUntilDeadline}d left`}
@@ -184,12 +196,12 @@ const IssueCard = ({ issue, onOpenDetail }) => {
           </div>
         </div>
 
-        <div className="flex items-center justify-between pt-3 border-t border-border/50">
+        <div className="flex items-center justify-between pt-3 border-t border-slate-100">
            <div className="flex flex-wrap gap-2 flex-1 min-w-0">
               {issue.status === 'done' ? (
-                <div className="flex items-center gap-1 text-[9px] font-black text-green-600 bg-green-50 px-2 py-1 rounded-lg">
-                  <CheckCircle2 className="h-3 w-3 shrink-0" />
-                  Completed
+                <div className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-500 bg-slate-100/80 px-2 py-0.5 rounded">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-slate-400" />
+                  Resolved
                 </div>
               ) : (
                 <AssignmentDropdown 
@@ -201,46 +213,37 @@ const IssueCard = ({ issue, onOpenDetail }) => {
            </div>
 
            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                <button onClick={(e) => { e.stopPropagation(); setIsEditing(true); }} className="p-1.5 hover:bg-primary/5 text-muted hover:text-primary rounded-lg transition-colors">
-                    <Edit3 className="h-3.5 w-3.5" />
+                <button onClick={(e) => { e.stopPropagation(); setIsEditing(true); }} className="p-1 text-slate-400 hover:text-slate-900 transition-colors">
+                    <Edit3 className="h-4 w-4" />
                 </button>
-                <button onClick={(e) => { e.stopPropagation(); handleDelete(); }} className="p-1.5 hover:bg-red-50 text-muted hover:text-red-500 rounded-lg transition-colors">
-                    <Trash2 className="h-3.5 w-3.5" />
+                <button onClick={(e) => { e.stopPropagation(); handleDelete(); }} className="p-1 text-slate-400 hover:text-red-600 transition-colors">
+                    <Trash2 className="h-4 w-4" />
                 </button>
            </div>
         </div>
 
-        {/* Action Button */}
-        <div className="pt-3 border-t border-border/50">
+        <div className="pt-1">
             {issue.status === 'todo' && (
-                <button 
-                  onClick={(e) => { e.stopPropagation(); handleStatusChange('in_progress'); }}
-                  className={cn("w-full flex items-center justify-center gap-2 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95", isDelayed ? "bg-red-500/10 text-red-600 hover:bg-red-500 hover:text-white" : "bg-primary/5 text-primary hover:bg-primary hover:text-white")}
-                >
-                    <PlayCircle className="h-3.5 w-3.5" />
-                    {isDelayed ? 'Resume (Delayed)' : 'Start Task'}
-                </button>
+              <button 
+                onClick={(e) => { e.stopPropagation(); handleStatusChange('in_progress'); }}
+                className="w-full flex items-center justify-center gap-2 py-1.5 rounded-lg border border-primary/20 text-primary text-[11px] font-semibold uppercase tracking-wider hover:bg-primary hover:text-white transition-all active:scale-95"
+              >
+                  <PlayCircle className="h-3.5 w-3.5" />
+                  Start Task
+              </button>
             )}
             {issue.status === 'in_progress' && (
-                <button 
-                  onClick={(e) => { e.stopPropagation(); handleStatusChange('done'); }}
-                  className={cn("w-full flex items-center justify-center gap-2 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95", 
-                    isDelayed ? "bg-emerald-500/10 text-emerald-700 hover:bg-emerald-600 hover:text-white" : "bg-green-500/5 text-green-600 hover:bg-green-600 hover:text-white"
-                  )}
-                >
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                    Mark Complete
-                </button>
-            )}
-            {issue.status === 'done' && (
-                <div className="flex items-center justify-center gap-2 py-2 rounded-xl bg-neutral-100 text-neutral-400 text-[10px] font-black uppercase tracking-widest">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-green-500/40" />
-                    Completed
-                </div>
+              <button 
+                onClick={(e) => { e.stopPropagation(); handleStatusChange('done'); }}
+                className="w-full flex items-center justify-center gap-2 py-1.5 rounded-lg bg-emerald-600 text-white text-[11px] font-semibold uppercase tracking-wider hover:bg-emerald-700 transition-all active:scale-95 shadow-sm"
+              >
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  Complete
+              </button>
             )}
         </div>
       </div>
-    </GlassPanel>
+    </div>
   );
 };
 

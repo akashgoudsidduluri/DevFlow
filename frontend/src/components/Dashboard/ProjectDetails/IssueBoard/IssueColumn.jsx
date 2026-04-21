@@ -33,8 +33,8 @@ const IssueColumn = ({ status, issues, onOpenDetail }) => {
           isBottleneck ? "bg-amber-500/10 border border-amber-500/20" : ""
       )}>
         <div className="flex items-center gap-2 flex-1">
-           <div className={cn("p-2 rounded-xl", status === 'Done' ? "bg-green-500/10" : status === 'In Progress' ? "bg-primary/10" : "bg-neutral-100")}>
-              <Icon className={cn("h-4 w-4", status === 'Done' ? "text-green-600" : status === 'In Progress' ? "text-primary" : "text-neutral-500")} />
+           <div className={cn("p-2 rounded-lg", status === 'Completed' ? "bg-slate-100" : status === 'In Progress' ? "bg-primary/10" : "bg-slate-100")}>
+              <Icon className={cn("h-4 w-4", status === 'Completed' ? "text-slate-500" : status === 'In Progress' ? "text-primary" : "text-slate-500")} />
            </div>
            <div className="flex flex-col gap-1">
              <h3 className="font-bold text-sm tracking-tight text-foreground uppercase">{status}</h3>

@@ -30,53 +30,49 @@ const LoginForm = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-background relative overflow-hidden">
-        {/* Decorative elements */}
-        <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[120px]" />
-
-        <GlassPanel className="max-w-md w-full p-10 space-y-8 relative z-10">
+    <div className="min-h-screen flex items-center justify-center p-6 bg-slate-50">
+        <div className="max-w-md w-full bg-white rounded-2xl border border-slate-200 shadow-xl p-10 space-y-8">
             <div className="text-center space-y-2">
-                <div className="inline-flex p-3 bg-primary/10 rounded-2xl mb-4">
+                <div className="inline-flex p-3 bg-slate-100 rounded-xl mb-2">
                     <ShieldCheck className="h-8 w-8 text-primary" />
                 </div>
-                <h1 className="text-3xl font-black tracking-tighter text-foreground uppercase">Access Protocol</h1>
-                <p className="text-muted text-sm">Synchronize your credentials to enter the workspace.</p>
+                <h1 className="text-2xl font-bold tracking-tight text-slate-900">Sign in to DevFlow</h1>
+                <p className="text-slate-500 text-sm">Enter your credentials to access your workspaces.</p>
             </div>
 
             {error && (
-                <div className="p-4 bg-red-50 border border-red-100 rounded-xl text-red-600 text-xs font-bold animate-shake">
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-xs font-semibold">
                     {error}
                 </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-muted px-1">User Identifier</label>
+                    <label className="text-xs font-semibold text-slate-700 px-1">Email Address</label>
                     <div className="relative group">
-                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted group-focus-within:text-primary transition-colors" />
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-primary transition-colors" />
                         <input
                             type="email"
                             placeholder="name@company.com"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
-                            className="w-full pl-12 pr-4 py-3.5 bg-white/50 border border-border rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all text-sm"
+                            className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white outline-none transition-all text-sm"
                         />
                     </div>
                 </div>
 
                 <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-muted px-1">Security Key</label>
+                    <label className="text-xs font-semibold text-slate-700 px-1">Password</label>
                     <div className="relative group">
-                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted group-focus-within:text-primary transition-colors" />
+                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-primary transition-colors" />
                         <input
                             type="password"
                             placeholder="••••••••"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
-                            className="w-full pl-12 pr-4 py-3.5 bg-white/50 border border-border rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all text-sm"
+                            className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white outline-none transition-all text-sm"
                         />
                     </div>
                 </div>
@@ -84,19 +80,19 @@ const LoginForm = () => {
                 <Button 
                     type="submit" 
                     isLoading={loading}
-                    className="w-full h-14 text-sm font-bold group"
+                    className="w-full h-11 text-sm font-bold shadow-sm"
                 >
-                    Authenticate
-                    <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                    Continue
+                    <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
             </form>
 
-            <div className="pt-6 border-t border-border/50 text-center">
-                <p className="text-sm text-muted">
-                    New to the protocol? <Link to="/register" state={{ from: location.state?.from }} className="text-primary font-bold hover:text-primary/80 transition-colors">Register Identity</Link>
+            <div className="pt-6 border-t border-slate-100 text-center">
+                <p className="text-sm text-slate-500">
+                    New to DevFlow? <Link to="/register" state={{ from: location.state?.from }} className="text-primary font-semibold hover:underline">Create account</Link>
                 </p>
             </div>
-        </GlassPanel>
+        </div>
     </div>
   );
 };

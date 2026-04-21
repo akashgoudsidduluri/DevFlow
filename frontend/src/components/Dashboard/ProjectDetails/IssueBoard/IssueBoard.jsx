@@ -3,11 +3,12 @@ import { useIssue } from '../../../../context/IssueContext';
 import { useAuth } from '../../../../context/AuthContext';
 import IssueColumn from './IssueColumn';
 import IssueDetailModal from '../../../Issue/IssueDetailModal';
-import { Search, ShieldAlert, Info } from 'lucide-react';
+import { Search, Filter, ShieldAlert, User, Layers, Info, TrendingUp, AlertCircle, CheckCircle2, Clock } from 'lucide-react';
+import { cn } from '../../../../lib/utils';
 import GlassPanel from '../../../shared/GlassPanel';
 import Skeleton from '../../../shared/Skeleton';
 
-const IssueBoard = ({ projectId, projectMembers = [], isMember, isOwner }) => {
+const IssueBoard = ({ projectId, projectMembers = [], ownerId, isMember, isOwner }) => {
   const { issues, loading, error, getIssuesByProject, retryFetch } = useIssue();
   const { user } = useAuth();
   const [selectedIssueId, setSelectedIssueId] = useState(null);
@@ -239,12 +240,12 @@ const IssueBoard = ({ projectId, projectMembers = [], isMember, isOwner }) => {
 
             {/* Results */}
             <div className="flex items-end">
-              <GlassPanel className="w-full p-2.5 text-center rounded-lg bg-primary/5">
-                <p className="text-sm font-bold text-primary">{filteredIssues.length} results</p>
-              </GlassPanel>
+              <div className="w-full p-2 text-center rounded-lg bg-slate-50 border border-slate-200">
+                <p className="text-xs font-semibold text-slate-600">{filteredIssues.length} tasks found</p>
+              </div>
             </div>
           </div>
-        </GlassPanel>
+        </div>
       </div>
 
       {/* Board Columns */}
