@@ -5,8 +5,8 @@ const GlassPanel = ({ children, className, hoverEffect = false, ...props }) => {
   return (
     <div 
       className={cn(
-        "glass-panel rounded-2xl transition-all duration-300",
-        hoverEffect && "hover:-translate-y-1 hover:shadow-2xl hover:shadow-primary/10",
+        "glass-panel rounded-xl",
+        hoverEffect && "hover-lift",
         className
       )}
       {...props}

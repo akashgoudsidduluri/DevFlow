@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { X, Loader2, MessageCircle, Send, Calendar, User, Clock } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { X, Loader2, MessageCircle, Send } from 'lucide-react';
 import API from '../../utils/api';
 import Button from '../shared/Button';
 import GlassPanel from '../shared/GlassPanel';
@@ -37,7 +37,7 @@ const CommentItem = ({ comment }) => {
   );
 };
 
-const IssueDetailModal = ({ issueId, onClose, isMember, isOwner }) => {
+const IssueDetailModal = ({ issueId, onClose, isMember }) => {
   const [issue, setIssue] = useState(null);
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -45,16 +45,7 @@ const IssueDetailModal = ({ issueId, onClose, isMember, isOwner }) => {
   const [newComment, setNewComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    if (!issueId) return;
-    setIssue(null);
-    setComments([]);
-    setError('');
-    setNewComment('');
-    fetchIssueDetail();
-  }, [issueId]);
-
-  const fetchIssueDetail = async () => {
+  const fetchIssueDetail = useCallback(async () => {
     setLoading(true);
     setError('');
 
@@ -71,7 +62,16 @@ const IssueDetailModal = ({ issueId, onClose, isMember, isOwner }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [issueId]);
+
+  useEffect(() => {
+    if (!issueId) return;
+    setIssue(null);
+    setComments([]);
+    setError('');
+    setNewComment('');
+    fetchIssueDetail();
+  }, [issueId, fetchIssueDetail]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

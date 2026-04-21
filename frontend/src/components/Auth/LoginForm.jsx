@@ -4,7 +4,6 @@ import { useAuth } from '../../context/AuthContext';
 import { Mail, Lock, LogIn, ArrowRight, ShieldCheck } from 'lucide-react';
 import GlassPanel from '../shared/GlassPanel';
 import Button from '../shared/Button';
-import { cn } from '../../lib/utils';
 
 const LoginForm = () => {
   const [email, setEmail] = useState('');
@@ -25,7 +24,9 @@ const LoginForm = () => {
     try {
       await login(email, password);
       navigate(from, { replace: true });
-    } catch (err) {}
+    } catch {
+      // Auth errors are surfaced through context state.
+    }
   };
 
   return (
@@ -92,7 +93,7 @@ const LoginForm = () => {
 
             <div className="pt-6 border-t border-border/50 text-center">
                 <p className="text-sm text-muted">
-                    New to the protocol? <Link to="/register" state={{ from: location.state?.from }} className="text-primary font-bold hover:underline">Register Identity</Link>
+                    New to the protocol? <Link to="/register" state={{ from: location.state?.from }} className="text-primary font-bold hover:text-primary/80 transition-colors">Register Identity</Link>
                 </p>
             </div>
         </GlassPanel>

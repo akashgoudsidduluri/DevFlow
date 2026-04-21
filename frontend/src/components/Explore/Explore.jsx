@@ -1,237 +1,312 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Compass, Users, Sparkles, UserPlus, UserCheck, AlertCircle, Loader2 } from 'lucide-react';
+import {
+  AlertCircle,
+  Compass,
+  Loader2,
+  Search,
+  Sparkles,
+  UserCheck,
+  UserPlus,
+  Users,
+} from 'lucide-react';
 import API from '../../utils/api';
 import GlassPanel from '../shared/GlassPanel';
-import Button from '../shared/Button';
 import ProjectCard from '../Dashboard/ProjectList/ProjectCard';
 import Skeleton from '../shared/Skeleton';
 import { cn } from '../../lib/utils';
-import { useAuth } from '../../context/AuthContext';
 
 const Explore = () => {
-    const { user: currentUser } = useAuth();
-    const [query, setQuery] = useState('');
-    const [users, setUsers] = useState([]);
-    const [projects, setProjects] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [searching, setSearching] = useState(false);
-    const [error, setError] = useState(null);
+  const [query, setQuery] = useState('');
+  const [searchResults, setSearchResults] = useState({ users: [], projects: [] });
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searching, setSearching] = useState(false);
+  const [error, setError] = useState(null);
+  const [showDropdown, setShowDropdown] = useState(false);
+  
+  const dropdownRef = useRef(null);
+
+  const hasCalledInitial = useRef(false);
+  const abortControllerRef = useRef(null);
+
+  const fetchPublicProjects = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await API.get('/projects/public');
+      setProjects(response.data.projects || []);
+      setError(null);
+    } catch {
+      setError('Failed to synchronize with the global project stream.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!hasCalledInitial.current) {
+      fetchPublicProjects();
+      hasCalledInitial.current = true;
+    }
+  }, [fetchPublicProjects]);
+
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      if (query.length >= 2) {
+        performSearch(query);
+      } else {
+        setSearchResults({ users: [], projects: [] });
+        setSearching(false);
+        setShowDropdown(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [query]);
+
+  // Click outside to close implementation
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
     
-    const hasCalledInitial = useRef(false);
-    const abortControllerRef = useRef(null);
-
-    // Initial Fetch (Public Projects)
-    const fetchPublicProjects = useCallback(async () => {
-        try {
-            setLoading(true);
-            const response = await API.get('/projects/public');
-            setProjects(response.data.projects || []);
-            setError(null);
-        } catch (err) {
-            setError('Failed to synchronize with the global project stream.');
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    useEffect(() => {
-        if (!hasCalledInitial.current) {
-            fetchPublicProjects();
-            hasCalledInitial.current = true;
-        }
-    }, [fetchPublicProjects]);
-
-    // Debounced Search Handler
-    useEffect(() => {
-        const delayDebounceFn = setTimeout(() => {
-            if (query.length >= 2) {
-                performSearch(query);
-            } else if (query.length === 0) {
-                setUsers([]);
-                setSearching(false);
-            }
-        }, 300);
-
-        return () => clearTimeout(delayDebounceFn);
-    }, [query]);
-
-    const performSearch = async (q) => {
-        // Cancel previous request if it exists
-        if (abortControllerRef.current) {
-            abortControllerRef.current.abort();
-        }
-
-        abortControllerRef.current = new AbortController();
-        setSearching(true);
-
-        try {
-            const response = await API.get(`/users/search?q=${q}`, {
-                signal: abortControllerRef.current.signal
-            });
-            setUsers(response.data.users || []);
-            setError(null);
-        } catch (err) {
-            if (err.name !== 'CanceledError') {
-                setError('Search protocol interrupted.');
-            }
-        } finally {
-            setSearching(false);
-        }
+    const handleEscKey = (event) => {
+      if (event.key === 'Escape') {
+        setShowDropdown(false);
+      }
     };
 
-    // Optimistic Follow Toggle
-    const toggleFollow = async (targetUser) => {
-        const originalStatus = targetUser.isFollowing;
-        
-        // Update UI immediately (Optimistic)
-        setUsers(prev => prev.map(u => 
-            u._id === targetUser._id ? { ...u, isFollowing: !originalStatus } : u
-        ));
-
-        try {
-            if (originalStatus) {
-                await API.post(`/users/unfollow/${targetUser._id}`);
-            } else {
-                await API.post(`/users/follow/${targetUser._id}`);
-            }
-        } catch (err) {
-            // Rollback on failure
-            setUsers(prev => prev.map(u => 
-                u._id === targetUser._id ? { ...u, isFollowing: originalStatus } : u
-            ));
-        }
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleEscKey);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscKey);
     };
+  }, []);
 
-    return (
-        <div className="flex-1 flex flex-col min-h-screen">
-            <div className="max-w-7xl mx-auto w-full px-6 py-10 space-y-12">
-                
-                {/* Header & Sticky Search */}
-                <header className="space-y-6">
-                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-                        <div className="space-y-2">
-                            <h1 className="text-4xl font-extrabold tracking-tight text-foreground flex items-center gap-3">
-                                Explore Hub
-                                <Compass className="h-8 w-8 text-primary animate-spin-slow" />
-                            </h1>
-                            <p className="text-muted text-lg max-w-xl">
-                                Discover next-gen architectures and connect with top-tier developers in the DevFlow network.
-                            </p>
-                        </div>
-                    </div>
+  const performSearch = async (q) => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
 
-                    <div className="sticky top-6 z-40">
-                        <GlassPanel className="p-2 bg-white/80 backdrop-blur-md shadow-xl shadow-primary/5 border-primary/10">
-                            <div className="relative group">
-                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted group-focus-within:text-primary transition-colors" />
-                                <input 
-                                    type="text"
-                                    placeholder="Search for developers by name..."
-                                    value={query}
-                                    onChange={(e) => setQuery(e.target.value)}
-                                    className="w-full pl-12 pr-4 py-4 bg-transparent outline-none text-lg font-medium placeholder:text-muted/50"
-                                />
-                                {searching && (
-                                    <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                                        <Loader2 className="h-5 w-5 text-primary animate-spin" />
-                                    </div>
-                                )}
-                            </div>
-                        </GlassPanel>
-                    </div>
-                </header>
+    abortControllerRef.current = new AbortController();
+    setSearching(true);
 
-                <div className="grid grid-cols-1 xl:grid-cols-12 gap-10">
-                    
-                    {/* Lateral Sidebar (User Search Results) */}
-                    <aside className="xl:col-span-4 space-y-6">
-                        <h3 className="text-sm font-black uppercase tracking-widest text-muted flex items-center gap-2 px-2">
-                            <Users className="h-4 w-4" />
-                            Developers to Follow
-                        </h3>
+    try {
+      const response = await API.get(`/search?q=${q}`, {
+        signal: abortControllerRef.current.signal,
+      });
+      setSearchResults(response.data || { users: [], projects: [] });
+      setShowDropdown(true);
+      setError(null);
+    } catch (err) {
+      if (err.name !== 'CanceledError') {
+        setError('Search protocol interrupted.');
+      }
+    } finally {
+      setSearching(false);
+    }
+  };
 
-                        <div className="space-y-3">
-                            {users.length > 0 ? (
-                                users.map(user => (
-                                    <GlassPanel key={user._id} className="p-4 flex items-center justify-between group hover:border-primary/30 transition-all">
-                                        <Link to={`/profile/${user._id}`} className="flex items-center gap-3 min-w-0 flex-1">
-                                            <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center font-bold text-primary overflow-hidden">
-                                                {user.avatarUrl ? (
-                                                    <img src={user.avatarUrl} alt={user.name} className="h-full w-full object-cover" />
-                                                ) : user.name.charAt(0)}
-                                            </div>
-                                            <div className="min-w-0">
-                                                <h4 className="text-sm font-bold text-foreground truncate max-w-[120px]">{user.name}</h4>
-                                                <p className="text-[10px] text-muted font-medium">New Collaborator</p>
-                                            </div>
-                                        </Link>
-                                        <button 
-                                            onClick={() => toggleFollow(user)}
-                                            className={cn(
-                                                "p-2 rounded-lg transition-all",
-                                                user.isFollowing 
-                                                    ? "bg-green-50 text-green-600 hover:bg-red-50 hover:text-red-500" 
-                                                    : "bg-primary/5 text-primary hover:bg-primary hover:text-white"
-                                            )}
-                                        >
-                                            {user.isFollowing ? <UserCheck className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
-                                        </button>
-                                    </GlassPanel>
-                                ))
-                            ) : query.length >= 2 && !searching ? (
-                                <div className="text-center py-10 opacity-50">
-                                    <AlertCircle className="h-8 w-8 mx-auto mb-2 text-muted" />
-                                    <p className="text-xs font-bold uppercase tracking-widest">No candidates found</p>
-                                </div>
-                            ) : query.length < 2 && (
-                                <div className="p-6 rounded-3xl bg-primary/5 border border-primary/5 border-dashed">
-                                    <p className="text-xs text-muted leading-relaxed text-center italic">
-                                        Enter at least 2 characters to trigger the identity search protocol.
-                                    </p>
-                                </div>
-                            )}
-                        </div>
-                    </aside>
+  const toggleFollow = async (targetUser) => {
+    const originalStatus = targetUser.isFollowing;
 
-                    {/* Main Feed (Project Discovery) */}
-                    <main className="xl:col-span-8 space-y-6">
-                        <h3 className="text-sm font-black uppercase tracking-widest text-muted flex items-center gap-2 px-2">
-                            <Sparkles className="h-4 w-4 text-primary" />
-                            Global Project Stream
-                        </h3>
+    setSearchResults((prev) => ({
+      ...prev,
+      users: prev.users.map((user) =>
+        user._id === targetUser._id ? { ...user, isFollowing: !originalStatus } : user
+      )
+    }));
 
-                        {loading ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <Skeleton className="h-64 rounded-3xl" />
-                                <Skeleton className="h-64 rounded-3xl" />
-                            </div>
-                        ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {projects.length > 0 ? (
-                                    projects.map(project => (
-                                        <ProjectCard key={project._id} project={project} />
-                                    ))
-                                ) : (
-                                    <div className="col-span-full py-20 text-center space-y-4 opacity-50">
-                                        <Compass className="h-12 w-12 mx-auto text-muted animate-spin-slow" />
-                                        <p className="text-sm font-bold uppercase tracking-widest">No public projects currently broadcasted</p>
-                                    </div>
-                                )}
-                            </div>
-                        )}
+    try {
+      if (originalStatus) {
+        await API.post(`/users/unfollow/${targetUser._id}`);
+      } else {
+        await API.post(`/users/follow/${targetUser._id}`);
+      }
+    } catch {
+      setSearchResults((prev) => ({
+        ...prev,
+        users: prev.users.map((user) =>
+          user._id === targetUser._id ? { ...user, isFollowing: originalStatus } : user
+        )
+      }));
+    }
+  };
 
-                        {error && (
-                            <div className="p-4 bg-red-50 text-red-500 rounded-2xl border border-red-100 text-sm font-medium flex items-center gap-2">
-                                <AlertCircle className="h-4 w-4" />
-                                {error}
-                            </div>
-                        )}
-                    </main>
-                </div>
+  return (
+    <div className="flex min-h-screen flex-1 flex-col">
+      <div className="mx-auto w-full max-w-7xl space-y-8 px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
+        <header className="grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
+          <GlassPanel className="flex flex-col justify-center overflow-hidden p-6 sm:p-8 space-y-2">
+            <div className="mb-2 self-start inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-primary">
+              <Compass className="h-4 w-4" />
+              Explore network
             </div>
+            <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl pt-2">
+              Discover public workspaces and collaborators.
+            </h1>
+            <p className="mt-3 max-w-2xl text-base text-muted">
+              Search developers, browse public projects, and spot collaboration opportunities through a cleaner discovery flow.
+            </p>
+          </GlassPanel>
+
+          <GlassPanel className="p-6 sm:p-7">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-[0.26em] text-primary">Search developers</p>
+                <p className="mt-2 text-sm leading-6 text-muted">Start typing a name to find people worth following or collaborating with.</p>
+              </div>
+              <Sparkles className="h-5 w-5 text-primary" />
+            </div>
+
+            <div ref={dropdownRef} className="relative group rounded-xl border border-border bg-white/50 p-1 shadow-sm mt-4">
+              <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted transition-colors group-focus-within:text-primary" />
+              <input
+                type="text"
+                placeholder="Search for developers or projects..."
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  if (!showDropdown && e.target.value.length >= 2) setShowDropdown(true);
+                }}
+                onFocus={() => {
+                  if (query.length >= 2) setShowDropdown(true);
+                }}
+                className="w-full rounded-lg bg-transparent py-3 pl-12 pr-12 text-sm outline-none transition-all placeholder:text-muted/70 focus:bg-white"
+              />
+              {searching && (
+                <Loader2 className="absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 animate-spin text-primary" />
+              )}
+              
+              {/* Autocomplete Dropdown */}
+              {showDropdown && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-border rounded-xl shadow-2xl z-50 max-h-[400px] overflow-y-auto animate-faded-in-up">
+                  {searching ? (
+                    <div className="p-8 flex flex-col items-center justify-center text-muted">
+                      <Loader2 className="h-6 w-6 animate-spin mb-2 text-primary" />
+                      <p className="text-xs font-semibold">Searching the network...</p>
+                    </div>
+                  ) : (searchResults.users?.length === 0 && searchResults.projects?.length === 0) ? (
+                    <div className="p-8 flex flex-col items-center justify-center text-center">
+                      <AlertCircle className="h-8 w-8 text-muted/30 mb-2" />
+                      <p className="text-sm font-bold text-foreground">No matches found</p>
+                      <p className="text-xs text-muted mt-1">Try expanding your search query.</p>
+                    </div>
+                  ) : (
+                    <div className="py-2">
+                      {/* Users Section */}
+                      {searchResults.users?.length > 0 && (
+                        <div className="px-3 pb-2 pt-1 border-b border-border/50 last:border-0 border-dashed">
+                           <div className="px-2 py-2 flex items-center justify-between">
+                             <p className="text-[10px] font-bold uppercase tracking-widest text-muted">Developers</p>
+                           </div>
+                           <div className="space-y-1">
+                              {searchResults.users.map((user) => (
+                                <div key={user._id} className="flex items-center justify-between gap-3 p-2 rounded-lg hover:bg-neutral-50 transition-colors group">
+                                  <Link to={`/profile/${user._id}`} className="flex flex-1 items-center gap-3 min-w-0" onClick={() => setShowDropdown(false)}>
+                                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold shrink-0 overflow-hidden">
+                                      {user.avatarUrl ? <img src={user.avatarUrl} alt={user.name} className="h-full w-full object-cover" /> : user.name.charAt(0)}
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                      <p className="text-sm font-bold text-foreground truncate group-hover:text-primary transition-colors">{user.name}</p>
+                                    </div>
+                                  </Link>
+                                  <button
+                                    onClick={(e) => { e.preventDefault(); toggleFollow(user); }}
+                                    className={cn(
+                                      'px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm shrink-0',
+                                      user.isFollowing
+                                        ? 'bg-transparent text-muted hover:text-red-500'
+                                        : 'bg-primary/10 text-primary hover:bg-primary hover:text-white'
+                                    )}
+                                  >
+                                    {user.isFollowing ? 'Following' : 'Follow'}
+                                  </button>
+                                </div>
+                              ))}
+                           </div>
+                        </div>
+                      )}
+                      
+                      {/* Projects Section */}
+                      {searchResults.projects?.length > 0 && (
+                        <div className="px-3 pb-2 pt-2 border-b border-border/50 last:border-0 border-dashed">
+                           <div className="px-2 py-2 flex items-center justify-between">
+                             <p className="text-[10px] font-bold uppercase tracking-widest text-muted">Projects</p>
+                           </div>
+                           <div className="space-y-1">
+                              {searchResults.projects.map((proj) => (
+                                <Link onClick={() => setShowDropdown(false)} key={proj._id} to={`/project/${proj._id}`} className="flex items-center justify-between gap-3 p-3 rounded-lg hover:bg-neutral-50 transition-colors group border border-transparent hover:border-border/60">
+                                  <div className="min-w-0 flex-1 flex items-center gap-3">
+                                    <Compass className="h-5 w-5 text-muted group-hover:text-primary transition-colors shrink-0" />
+                                    <div className="min-w-0">
+                                      <p className="text-sm font-bold text-foreground truncate group-hover:text-primary transition-colors">{proj.title}</p>
+                                      <p className="text-xs text-muted truncate mt-0.5">{proj.description}</p>
+                                    </div>
+                                  </div>
+                                  <span className="hidden sm:inline-flex bg-green-50 text-green-600 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest shrink-0">
+                                    {proj.status === 'Open' ? 'Active' : proj.status}
+                                  </span>
+                                </Link>
+                              ))}
+                           </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </GlassPanel>
+        </header>
+
+        <div className="flex flex-col gap-10">
+          
+          <main className="space-y-5">
+            <div className="flex items-center justify-between">
+              <h3 className="flex items-center gap-2 text-lg font-black tracking-tight text-foreground">
+                <Sparkles className="h-5 w-5 text-primary" />
+                Global Project Stream
+              </h3>
+              <span className="rounded-full bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+                Public feed
+              </span>
+            </div>
+
+            {loading ? (
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <Skeleton className="h-80 rounded-[2rem]" />
+                <Skeleton className="h-80 rounded-[2rem]" />
+                <Skeleton className="h-80 hidden lg:block rounded-[2rem]" />
+              </div>
+            ) : projects.length > 0 ? (
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {projects.map((project) => (
+                  <ProjectCard key={project._id} project={project} />
+                ))}
+              </div>
+            ) : (
+              <GlassPanel className="flex flex-col items-center justify-center rounded-[2rem] py-24 text-center">
+                <Compass className="mb-4 h-12 w-12 text-muted/40" />
+                <p className="text-lg font-black text-foreground">No public projects available</p>
+                <p className="mt-2 max-w-md text-sm leading-7 text-muted">When public workspaces are available, they’ll appear here in the discovery feed.</p>
+              </GlassPanel>
+            )}
+
+            {error && (
+              <div className="flex items-center gap-2 rounded-2xl border border-red-100 bg-red-50 p-4 text-sm font-medium text-red-500">
+                <AlertCircle className="h-4 w-4" />
+                {error}
+              </div>
+            )}
+          </main>
         </div>
-    );
+      </div>
+    </div>
+  );
 };
 
 export default Explore;

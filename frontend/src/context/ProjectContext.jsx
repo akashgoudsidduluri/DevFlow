@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useState, useContext, useCallback } from 'react';
 import API from '../utils/api';
 
@@ -125,7 +126,7 @@ export const ProjectProvider = ({ children }) => {
     try {
       const response = await API.get(`/projects/${projectId}/invitations`);
       return response.data;
-    } catch (err) {
+    } catch {
       return [];
     }
   }, []);

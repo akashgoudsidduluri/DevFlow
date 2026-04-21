@@ -8,7 +8,7 @@ import Button from '../shared/Button';
 const VerificationPage = () => {
   const { token } = useParams();
   const navigate = useNavigate();
-  const { verifyInvitation, loading } = useProject();
+  const { verifyInvitation } = useProject();
   const [status, setStatus] = useState('verifying'); // 'verifying', 'success', 'error'
   const [errorMessage, setErrorMessage] = useState('');
   const hasCalled = React.useRef(false);

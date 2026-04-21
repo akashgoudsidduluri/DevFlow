@@ -1,4 +1,5 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import API from '../utils/api';
 
 // Step 1: Create the Auth Context
@@ -10,12 +11,17 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Check if user is already logged in when app loads
-  useEffect(() => {
-    checkUserLoggedIn();
+  const logout = useCallback(async () => {
+    try {
+      await API.post('/users/logout');
+      setUser(null);
+      setError(null);
+    } catch (err) {
+      console.error('Logout error:', err);
+    }
   }, []);
 
-  const checkUserLoggedIn = async () => {
+  const checkUserLoggedIn = useCallback(async () => {
     try {
       const response = await API.get('/users/profile');
       setUser(response.data);
@@ -29,7 +35,12 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [logout]);
+
+  // Check if user is already logged in when app loads
+  useEffect(() => {
+    checkUserLoggedIn();
+  }, [checkUserLoggedIn]);
 
   // Login function
   const login = async (email, password) => {
@@ -62,17 +73,6 @@ export const AuthProvider = ({ children }) => {
       throw err;
     } finally {
       setLoading(false);
-    }
-  };
-
-  // Logout function
-  const logout = async () => {
-    try {
-      await API.post('/users/logout');
-      setUser(null);
-      setError(null);
-    } catch (err) {
-      console.error('Logout error:', err);
     }
   };
 

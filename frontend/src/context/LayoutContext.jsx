@@ -1,16 +1,35 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState } from 'react';
 
 const LayoutContext = createContext();
 
 export const LayoutProvider = ({ children }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
   };
 
+  const toggleMobileSidebar = () => {
+    setIsMobileSidebarOpen((prev) => !prev);
+  };
+
+  const closeMobileSidebar = () => {
+    setIsMobileSidebarOpen(false);
+  };
+
   return (
-    <LayoutContext.Provider value={{ isCollapsed, setIsCollapsed, toggleSidebar }}>
+    <LayoutContext.Provider
+      value={{
+        isCollapsed,
+        setIsCollapsed,
+        toggleSidebar,
+        isMobileSidebarOpen,
+        toggleMobileSidebar,
+        closeMobileSidebar,
+      }}
+    >
       {children}
     </LayoutContext.Provider>
   );

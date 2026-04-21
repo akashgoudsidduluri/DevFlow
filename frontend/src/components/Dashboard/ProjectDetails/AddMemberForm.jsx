@@ -54,6 +54,12 @@ const AddMemberForm = ({ projectId, onMemberAdded }) => {
             Provision Access
         </Button>
       </form>
+
+      {success && (
+        <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-3 text-[10px] font-black uppercase tracking-widest text-emerald-600">
+          Invitation sent successfully.
+        </div>
+      )}
       
       {error && (
         <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-red-500 bg-red-50 p-3 rounded-xl border border-red-100 animate-pulse">

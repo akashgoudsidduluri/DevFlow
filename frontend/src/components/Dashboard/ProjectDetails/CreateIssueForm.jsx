@@ -4,7 +4,6 @@ import { useProject } from '../../../context/ProjectContext';
 import { Plus, X, ListTodo, AlignLeft, BarChart3, UserPlus, Calendar, Rocket, Sparkles } from 'lucide-react';
 import GlassPanel from '../../shared/GlassPanel';
 import Button from '../../shared/Button';
-import { cn } from '../../../lib/utils';
 
 const CreateIssueForm = ({ projectId }) => {
   const [title, setTitle] = useState('');
@@ -58,7 +57,9 @@ const CreateIssueForm = ({ projectId }) => {
       setAssignedTo('');
       setDeadline('');
       setShowForm(false);
-    } catch (err) { }
+    } catch {
+      // Issue errors are surfaced through context state.
+    }
   };
 
   if (!showForm) {

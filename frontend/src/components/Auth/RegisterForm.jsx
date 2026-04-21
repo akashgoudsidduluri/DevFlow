@@ -33,7 +33,9 @@ const RegisterForm = () => {
     try {
       await register(name, email, password);
       navigate(from, { replace: true });
-    } catch (err) {}
+    } catch {
+      // Auth errors are surfaced through context state.
+    }
   };
 
   return (
@@ -133,7 +135,7 @@ const RegisterForm = () => {
 
             <div className="pt-6 border-t border-border/50 text-center">
                 <p className="text-sm text-muted">
-                    Already a member? <Link to="/login" state={{ from: location.state?.from }} className="text-primary font-bold hover:underline">Log In</Link>
+                    Already a member? <Link to="/login" state={{ from: location.state?.from }} className="text-primary font-bold hover:text-primary/80 transition-colors">Log In</Link>
                 </p>
             </div>
         </GlassPanel>

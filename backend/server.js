@@ -10,6 +10,7 @@ import projectRoutes from "./routes/projectRoutes.js";
 import issueRoutes from "./routes/issueRoutes.js";
 import commentRoutes from "./routes/commentRoutes.js";
 import discussionRoutes from "./routes/discussionRoutes.js";
+import searchRoutes from "./routes/searchRoutes.js";
 import { notFound, errorHandler } from "./middleware/errorMiddleware.js";
 import { apiLimiter } from "./middleware/rateLimiter.js";
 import { initSocket } from "./utils/socketManager.js";
@@ -21,7 +22,7 @@ const app = express();
 const httpServer = createServer(app);
 
 const corsOptions = {
-  origin: 'http://localhost:5173',
+  origin: ['http://localhost:5173', 'http://localhost:5174'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -30,7 +31,7 @@ const corsOptions = {
 // Init Socket.io
 const io = new Server(httpServer, {
   cors: {
-    origin: 'http://localhost:5173',
+    origin: ['http://localhost:5173', 'http://localhost:5174'],
     methods: ['GET', 'POST'],
     credentials: true,
   },
@@ -59,6 +60,7 @@ app.use("/api/projects", projectRoutes);
 app.use("/api/issues", issueRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/discussions", discussionRoutes);
+app.use("/api/search", searchRoutes);
 
 app.get("/", (req, res) => {
     res.send("API is running...");

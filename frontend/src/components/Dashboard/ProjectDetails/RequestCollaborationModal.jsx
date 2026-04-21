@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { MessageSquare, Loader2, CheckCircle } from 'lucide-react';
 import Button from '../../shared/Button';
 import GlassPanel from '../../shared/GlassPanel';
-import { cn } from '../../../lib/utils';
 import API from '../../../utils/api';
 
 const RequestCollaborationModal = ({ projectId, projectName, onSuccess, isOpen, onClose }) => {

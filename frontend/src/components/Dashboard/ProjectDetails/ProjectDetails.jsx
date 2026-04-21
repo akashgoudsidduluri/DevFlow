@@ -23,15 +23,29 @@ const ProjectDetails = () => {
   const [showCollaborationModal, setShowCollaborationModal] = useState(false);
 
   useEffect(() => {
-    if (id) {
-      getProjectById(id);
-      loadInvites();
-    }
+    if (!id) return;
+    getProjectById(id);
   }, [id, getProjectById]);
 
-  const loadInvites = async () => {
-    const invites = await getProjectInvitations(id);
-    setPendingInvites(invites);
+  useEffect(() => {
+    if (!id) return;
+
+    let isActive = true;
+
+    getProjectInvitations(id).then((invites) => {
+      if (isActive) {
+        setPendingInvites(invites);
+      }
+    });
+
+    return () => {
+      isActive = false;
+    };
+  }, [getProjectInvitations, id]);
+
+  const reloadInvites = () => {
+    if (!id) return;
+    getProjectInvitations(id).then(setPendingInvites);
   };
 
   if (loading) return (
@@ -192,7 +206,7 @@ const ProjectDetails = () => {
                             <Plus className="h-3 w-3" />
                             Expand the Core
                         </h4>
-                        <AddMemberForm projectId={id} onMemberAdded={loadInvites} />
+                        <AddMemberForm projectId={id} onMemberAdded={reloadInvites} />
                     </div>
                 )}
             </GlassPanel>

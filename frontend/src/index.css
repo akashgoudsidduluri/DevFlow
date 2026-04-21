@@ -1,47 +1,89 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: hsl(210 40% 98%);
+  --color-background: hsl(210 33% 98%);
   --color-foreground: hsl(222 47% 11%);
 
-  --color-primary: hsl(221 83% 53%);
+  --color-primary: hsl(217 91% 43%);
   --color-primary-foreground: hsl(210 40% 98%);
 
   --color-surface: hsl(0 0% 100%);
   --color-surface-foreground: hsl(222 47% 11%);
 
-  --color-muted: hsl(215 16% 47%);
-  --color-muted-foreground: hsl(215 16% 47%);
+  --color-muted: hsl(215 15% 45%);
+  --color-muted-foreground: hsl(215 15% 45%);
 
-  --color-border: hsl(214 32% 91%);
+  --color-border: hsl(214 30% 88%);
   
   --radius-xl: 0.75rem;
   --radius-2xl: 1rem;
   --radius-3xl: 1.5rem;
 
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Sora', 'Inter', system-ui, -apple-system, sans-serif;
 }
 
 @layer base {
+  html {
+    font-family: var(--font-sans);
+  }
+
   body {
     @apply bg-background text-foreground antialiased min-h-screen relative;
-    background-image: 
-        radial-gradient(at 0% 0%, hsla(221, 83%, 53%, 0.05) 0px, transparent 50%),
-        radial-gradient(at 100% 0%, hsla(199, 89%, 48%, 0.05) 0px, transparent 50%),
-        radial-gradient(at 100% 100%, hsla(221, 83%, 53%, 0.05) 0px, transparent 50%),
-        radial-gradient(at 0% 100%, hsla(199, 89%, 48%, 0.05) 0px, transparent 50%);
+    background-image: linear-gradient(135deg, rgba(248, 250, 252, 1) 0%, rgba(241, 245, 249, 1) 100%);
+  }
+
+  #root {
+    min-height: 100vh;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.6) transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.55);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  input,
+  textarea,
+  select,
+  button {
+    font: inherit;
+  }
+
+  a {
+    @apply text-inherit no-underline;
+    text-decoration: none !important;
+  }
+
+  a:hover,
+  a:focus,
+  a:active {
+    text-decoration: none !important;
   }
 }
 
 @utility glass-panel {
-  @apply bg-white/70 backdrop-blur-md border border-white/20 shadow-lg;
+  @apply border border-border/60 bg-surface/90 shadow-sm;
 }
 
 @utility hover-lift {
-  @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/10;
+  @apply transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-primary/30;
 }
 
 @utility text-gradient {
   @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-400;
 }
-
