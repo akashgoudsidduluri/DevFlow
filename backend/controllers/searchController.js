@@ -7,6 +7,7 @@ import Project from "../models/Project.js";
 // @access  Private
 export const globalSearch = asyncHandler(async (req, res) => {
   const query = req.query.q;
+  const currentUserId = req.user._id;
 
   if (!query || query.length < 2) {
     return res.json({ users: [], projects: [] });
@@ -25,6 +26,16 @@ export const globalSearch = asyncHandler(async (req, res) => {
     .lean()
     .limit(5);
 
+  // Get current user to check following status
+  const currentUser = await User.findById(currentUserId).select('following').lean();
+  const followingIds = currentUser?.following || [];
+
+  // Add isFollowing property to each user
+  const usersWithFollowStatus = users.map((user) => ({
+    ...user,
+    isFollowing: followingIds.some((id) => id.toString() === user._id.toString()),
+  }));
+
   // Search public projects by title or description
   const projects = await Project.find({
     isPublic: true,
@@ -36,7 +47,7 @@ export const globalSearch = asyncHandler(async (req, res) => {
     .limit(5);
 
   res.json({
-    users,
+    users: usersWithFollowStatus,
     projects,
   });
 });

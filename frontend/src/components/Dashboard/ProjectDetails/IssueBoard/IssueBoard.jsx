@@ -35,11 +35,11 @@ const IssueBoard = ({ projectId, projectMembers = [], ownerId, isMember, isOwner
 
   if (error) return (
     <div className="p-10 text-center space-y-4">
-      <ShieldAlert className="h-12 w-12 text-red-500 mx-auto" />
-      <p className="text-red-500 font-bold">{error}</p>
+      <ShieldAlert className="h-12 w-12 text-accent-coral mx-auto" />
+      <p className="text-accent-coral font-bold">{error}</p>
       <button
         onClick={retryFetch}
-        className="px-4 py-2 bg-primary text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-primary/80 transition-colors"
+        className="px-4 py-2 bg-gradient-to-br from-primary to-primary/80 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:shadow-glow-primary transition-all"
       >
         Retry
       </button>
@@ -117,8 +117,8 @@ const IssueBoard = ({ projectId, projectMembers = [], ownerId, isMember, isOwner
 
   if (!loading && issues.length === 0) return (
     <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
-      <div className="p-5 bg-primary/5 rounded-3xl">
-        <Info className="h-10 w-10 text-primary/30" />
+      <div className="p-5 bg-gradient-to-br from-primary/20 to-accent-teal/10 rounded-3xl border border-primary/30">
+        <Info className="h-10 w-10 text-primary" />
       </div>
       <div>
         <p className="font-black text-sm text-foreground">No tasks yet</p>
@@ -163,7 +163,7 @@ const IssueBoard = ({ projectId, projectMembers = [], ownerId, isMember, isOwner
 
       {/* Search & Filter Bar */}
       <div className="space-y-4">
-        <GlassPanel className="p-4 bg-white/40 space-y-4">
+        <GlassPanel className="p-4 bg-surface/60 border-primary/40 space-y-4 hover-lift">
           {/* Search */}
           <div className="relative flex-1 group">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted group-focus-within:text-primary transition-colors" />
@@ -171,7 +171,7 @@ const IssueBoard = ({ projectId, projectMembers = [], ownerId, isMember, isOwner
               placeholder="Search by title or description..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-11 pr-4 py-2.5 bg-white/50 border border-border rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none text-sm"
+              className="w-full pl-11 pr-4 py-2.5 bg-surface/40 border border-primary/30 rounded-xl focus:ring-2 focus:ring-primary/40 focus:border-primary/60 transition-all outline-none text-sm text-foreground placeholder-muted"
             />
           </div>
 
@@ -183,7 +183,7 @@ const IssueBoard = ({ projectId, projectMembers = [], ownerId, isMember, isOwner
               <select
                 value={filterMode}
                 onChange={(e) => setFilterMode(e.target.value)}
-                className="w-full px-3 py-2 bg-white/50 border border-border rounded-lg text-sm font-medium focus:ring-2 focus:ring-primary outline-none"
+                className="w-full px-3 py-2 bg-surface/40 border border-primary/30 rounded-lg text-sm font-medium focus:ring-2 focus:ring-primary/40 outline-none text-foreground"
               >
                 <option value="all">All Tasks</option>
                 <option value="mine">My Tasks</option>
@@ -198,7 +198,7 @@ const IssueBoard = ({ projectId, projectMembers = [], ownerId, isMember, isOwner
               <select
                 value={priorityFilter}
                 onChange={(e) => setPriorityFilter(e.target.value)}
-                className="w-full px-3 py-2 bg-white/50 border border-border rounded-lg text-sm font-medium focus:ring-2 focus:ring-primary outline-none"
+                className="w-full px-3 py-2 bg-surface/40 border border-primary/30 rounded-lg text-sm font-medium focus:ring-2 focus:ring-primary/40 outline-none text-foreground"
               >
                 <option value="all">All Priorities</option>
                 <option value="high">High</option>
@@ -213,7 +213,7 @@ const IssueBoard = ({ projectId, projectMembers = [], ownerId, isMember, isOwner
               <select
                 value={assigneeFilter}
                 onChange={(e) => setAssigneeFilter(e.target.value)}
-                className="w-full px-3 py-2 bg-white/50 border border-border rounded-lg text-sm font-medium focus:ring-2 focus:ring-primary outline-none"
+                className="w-full px-3 py-2 bg-surface/40 border border-primary/30 rounded-lg text-sm font-medium focus:ring-2 focus:ring-primary/40 outline-none text-foreground"
               >
                 <option value="all">All</option>
                 <option value="mine">Assigned to me</option>
@@ -230,7 +230,7 @@ const IssueBoard = ({ projectId, projectMembers = [], ownerId, isMember, isOwner
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="w-full px-3 py-2 bg-white/50 border border-border rounded-lg text-sm font-medium focus:ring-2 focus:ring-primary outline-none"
+                className="w-full px-3 py-2 bg-surface/40 border border-primary/30 rounded-lg text-sm font-medium focus:ring-2 focus:ring-primary/40 outline-none text-foreground"
               >
                 <option value="priority">Priority</option>
                 <option value="deadline">Due Date</option>
@@ -240,12 +240,12 @@ const IssueBoard = ({ projectId, projectMembers = [], ownerId, isMember, isOwner
 
             {/* Results */}
             <div className="flex items-end">
-              <div className="w-full p-2 text-center rounded-lg bg-slate-50 border border-slate-200">
-                <p className="text-xs font-semibold text-slate-600">{filteredIssues.length} tasks found</p>
+              <div className="w-full p-2 text-center rounded-lg bg-gradient-to-r from-primary/10 to-accent-teal/10 border border-primary/30">
+                <p className="text-xs font-semibold text-foreground">{filteredIssues.length} tasks found</p>
               </div>
             </div>
           </div>
-        </div>
+        </GlassPanel>
       </div>
 
       {/* Board Columns */}

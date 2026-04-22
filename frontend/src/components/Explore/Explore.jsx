@@ -223,7 +223,7 @@ const Explore = () => {
                                         : 'bg-primary/10 text-primary hover:bg-primary hover:text-white'
                                     )}
                                   >
-                                    {user.isFollowing ? 'Following' : 'Follow'}
+                                    {user.isFollowing ? 'Unfollow' : 'Follow'}
                                   </button>
                                 </div>
                               ))}
